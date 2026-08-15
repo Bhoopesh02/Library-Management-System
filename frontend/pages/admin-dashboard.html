@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Library Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-book-open"></i> Library
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="admin-dashboard.html" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="manage-books.html" class="nav-link"><i class="fas fa-book"></i> Manage Books</a>
+                </li>
+                <li class="nav-item">
+                    <a href="manage-users.html" class="nav-link"><i class="fas fa-users"></i> Manage Users</a>
+                </li>
+                <li class="nav-item">
+                    <a href="transactions.html" class="nav-link"><i class="fas fa-exchange-alt"></i> Transactions</a>
+                </li>
+                <li class="nav-item">
+                    <a href="manage-fines.html" class="nav-link"><i class="fas fa-money-bill-wave"></i> Manage Fines</a>
+                </li>
+            </ul>
+            <div style="margin-top: auto;">
+
+                <button class="btn btn-danger" onclick="logout()" style="width: 100%;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1>Overview</h1>
+                    <p class="text-muted" id="currentDate"></p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <span id="userName" style="font-weight: 600;">Admin User</span>
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 50%; background-color: var(--primary-color); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,180,168,0.3);">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card fade-in-up stagger-1">
+                    <div class="stat-icon"><i class="fas fa-book"></i></div>
+                    <div class="stat-details">
+                        <h3 id="statTotalBooks">0</h3>
+                        <p>Total Books</p>
+                    </div>
+                </div>
+                <div class="stat-card fade-in-up stagger-2">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-details">
+                        <h3 id="statTotalUsers">0</h3>
+                        <p>Total Users</p>
+                    </div>
+                </div>
+                <div class="stat-card fade-in-up stagger-3">
+                    <div class="stat-icon"
+                        style="background-color: rgba(255, 193, 7, 0.1); color: var(--warning-color);"><i
+                            class="fas fa-exchange-alt"></i></div>
+                    <div class="stat-details">
+                        <h3 id="statCurrentlyIssued">0</h3>
+                        <p>Currently Issued</p>
+                    </div>
+                </div>
+                <div class="stat-card fade-in-up stagger-4">
+                    <div class="stat-icon"
+                        style="background-color: rgba(255, 76, 76, 0.1); color: var(--danger-color);"><i
+                            class="fas fa-money-bill-wave"></i></div>
+                    <div class="stat-details">
+                        <h3 id="statActiveFines">0</h3>
+                        <p>Active Fines</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+                <div class="card fade-in-up stagger-5">
+                    <h3 style="margin-bottom: 1rem;">Library Activity</h3>
+                    <canvas id="activityChart" height="100"></canvas>
+                </div>
+                <div class="card fade-in-up stagger-6">
+                    <h3 style="margin-bottom: 1rem;">Book Categories</h3>
+                    <canvas id="categoryChart" height="200"></canvas>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/animations.js"></script>
+    <script src="../js/dashboard.js"></script>
+</body>
+
+</html>

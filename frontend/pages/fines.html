@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Fines - Library Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-book-open"></i> Library
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="user-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="books.html" class="nav-link"><i class="fas fa-search"></i> Browse Books</a>
+                </li>
+                <li class="nav-item">
+                    <a href="my-books.html" class="nav-link"><i class="fas fa-book-reader"></i> My Books</a>
+                </li>
+                <li class="nav-item">
+                    <a href="fines.html" class="nav-link active"><i class="fas fa-money-bill-wave"></i> My Fines</a>
+                </li>
+            </ul>
+            <div style="margin-top: auto;">
+
+                <button class="btn btn-danger" onclick="logout()" style="width: 100%;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1>My Fines</h1>
+                    <p class="text-muted">View and review your overdue penalties</p>
+                </div>
+            </header>
+
+            <!-- Stats -->
+            <div class="stats-grid" style="margin-bottom: 1.5rem;">
+                <div class="stat-card fade-in-up stagger-1">
+                    <div class="stat-icon"
+                        style="background-color: rgba(255, 76, 76, 0.1); color: var(--danger-color);">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="unpaidTotal">₹ 0</h3>
+                        <p>Total Unpaid Fines</p>
+                    </div>
+                </div>
+                <div class="stat-card fade-in-up stagger-2">
+                    <div class="stat-icon"
+                        style="background-color: rgba(0, 180, 168, 0.1); color: var(--primary-color);">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3 id="paidTotal">₹ 0</h3>
+                        <p>Paid Fines History</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fade-in-up stagger-3">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Fine ID</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Date Incurred</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="finesTableBody">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="pagination"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem;">
+                    <button class="btn btn-sm" id="prevBtn" onclick="prevPage()"><i class="fas fa-chevron-left"></i>
+                        Prev</button>
+                    <span id="pageInfo" style="font-weight: 500; font-size: 0.9rem;">Page 1 of 1</span>
+                    <button class="btn btn-sm" id="nextBtn" onclick="nextPage()">Next <i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/animations.js"></script>
+    <script>
+        let currentPage = 0;
+        const pageSize = 10;
+        let totalPages = 1;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!token || !user) {
+                window.location.href = '../login.html';
+                return;
+            }
+            loadUserFines(0);
+        });
+
+        async function loadUserFines(page) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const tbody = document.getElementById('finesTableBody');
+            if (tbody && typeof renderSkeletonTable === 'function') {
+                renderSkeletonTable(tbody, 4, 5);
+            }
+
+            try {
+                const response = await fetchApi(`/fines/user/${user.id}?page=${page}&size=${pageSize}`);
+                if (response.success) {
+                    const data = response.data;
+                    currentPage = data.number || 0;
+                    totalPages = data.totalPages || 1;
+                    renderFinesTable(data.content || []);
+                    updatePagination();
+                }
+            } catch (error) {
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger-color); padding: 2rem;">Failed to load fines.</td></tr>';
+                }
+                showToast('Failed to load fines: ' + (error.message || 'Unknown error'), 'error');
+            }
+        }
+
+        function renderFinesTable(fines) {
+            const tbody = document.getElementById('finesTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            let unpaid = 0;
+            let paid = 0;
+
+            if (fines.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <i class="fas fa-smile-beam empty-state-icon" style="color: var(--success-color);"></i>
+                                <h4>No fines recorded</h4>
+                                <p>You have no overdue penalties. Keep up the great reading habits!</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                fines.forEach(fine => {
+                    if (fine.status === 'UNPAID') unpaid += fine.amount;
+                    else paid += fine.amount;
+
+                    const tr = document.createElement('tr');
+                    const isUnpaid = fine.status === 'UNPAID';
+                    const badge = isUnpaid
+                        ? '<span class="badge badge-danger"><i class="fas fa-exclamation-circle"></i> Unpaid</span>'
+                        : '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Paid</span>';
+
+                    tr.innerHTML = `
+                        <td><code>${fine.id ? fine.id.substring(0, 8) : '-'}...</code></td>
+                        <td style="font-weight: 700; color: ${isUnpaid ? 'var(--danger-color)' : 'var(--success-color)'};">₹ ${fine.amount}</td>
+                        <td>${fine.reason || 'Late Book Return'}</td>
+                        <td>${fine.createdAt ? new Date(fine.createdAt).toLocaleDateString() : '-'}</td>
+                        <td>${badge}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            if (typeof animateCountUp === 'function') {
+                animateCountUp('unpaidTotal', unpaid, 500, '₹ ');
+                animateCountUp('paidTotal', paid, 500, '₹ ');
+            } else {
+                document.getElementById('unpaidTotal').textContent = `₹ ${unpaid}`;
+                document.getElementById('paidTotal').textContent = `₹ ${paid}`;
+            }
+        }
+
+        function updatePagination() {
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (pageInfo) pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages || 1}`;
+            if (prevBtn) prevBtn.disabled = currentPage === 0;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages - 1;
+        }
+
+        function prevPage() {
+            if (currentPage > 0) loadUserFines(currentPage - 1);
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages - 1) loadUserFines(currentPage + 1);
+        }
+    </script>
+</body>
+
+</html>

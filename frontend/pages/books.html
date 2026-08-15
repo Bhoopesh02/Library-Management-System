@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Books - Library Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <i class="fas fa-book-open"></i> Library
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="user-dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="books.html" class="nav-link active"><i class="fas fa-search"></i> Browse Books</a>
+                </li>
+                <li class="nav-item">
+                    <a href="my-books.html" class="nav-link"><i class="fas fa-book-reader"></i> My Books</a>
+                </li>
+                <li class="nav-item">
+                    <a href="fines.html" class="nav-link"><i class="fas fa-money-bill-wave"></i> My Fines</a>
+                </li>
+            </ul>
+            <div style="margin-top: auto;">
+
+                <button class="btn btn-danger" onclick="logout()" style="width: 100%;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1>Browse Books</h1>
+                    <p class="text-muted">Find your next great read in the library collection</p>
+                </div>
+            </header>
+
+            <div class="card fade-in-up stagger-1" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <input type="text" id="searchInput" class="form-control"
+                        placeholder="Search by Title, Author, or ISBN..." style="flex-grow: 1; min-width: 240px;">
+                    <select id="categoryFilter" class="form-control" style="width: 240px;">
+                        <!-- Options injected by categories.js -->
+                    </select>
+                    <button class="btn btn-primary search-button-animated" onclick="loadBooks(0)"><i class="fas fa-search"></i> Search</button>
+                </div>
+
+                <div class="stats-grid" id="booksGrid"
+                    style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+                    <!-- Books injected here -->
+                </div>
+
+                <div id="pagination"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem;">
+                    <button class="btn btn-sm" id="prevBtn" onclick="prevPage()"><i class="fas fa-chevron-left"></i>
+                        Prev</button>
+                    <span id="pageInfo" style="font-weight: 500; font-size: 0.9rem;">Page 1 of 1</span>
+                    <button class="btn btn-sm" id="nextBtn" onclick="nextPage()">Next <i
+                            class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/animations.js"></script>
+    <script src="../js/categories.js"></script>
+    <script>
+        let currentPage = 0;
+        const pageSize = 12;
+        let totalPages = 1;
+        let categoryChanged = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '../login.html';
+                return;
+            }
+
+            document.getElementById('categoryFilter').innerHTML = generateCategoryOptions(true);
+            if (typeof initCustomDropdown === 'function') {
+                initCustomDropdown('categoryFilter');
+            }
+
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && typeof debounce === 'function') {
+                searchInput.addEventListener('input', debounce(() => {
+                    loadBooks(0);
+                }, 300));
+            }
+
+            document.getElementById('categoryFilter').addEventListener('change', () => {
+                categoryChanged = true;
+                loadBooks(0);
+            });
+
+            loadBooks(0);
+        });
+
+        async function loadBooks(page) {
+            const grid = document.getElementById('booksGrid');
+            if (grid && typeof renderSkeletonCards === 'function') {
+                renderSkeletonCards(grid, 6);
+            }
+
+            try {
+                const search = document.getElementById('searchInput').value.trim();
+                const category = document.getElementById('categoryFilter').value;
+
+                let url = `/books?page=${page}&size=${pageSize}`;
+                if (search) url += `&search=${encodeURIComponent(search)}`;
+                if (category) url += `&category=${encodeURIComponent(category)}`;
+
+                const response = await fetchApi(url);
+
+                if (response.success) {
+                    const pageData = response.data;
+                    currentPage = pageData.number || 0;
+                    totalPages = pageData.totalPages || 1;
+
+                    renderBooksGrid(pageData.content || []);
+                    updatePagination();
+                }
+            } catch (error) {
+                if (grid) {
+                    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--danger-color); padding: 2rem;">Failed to load books.</div>';
+                }
+                showToast('Failed to load books: ' + (error.message || 'Unknown error'), 'error');
+            }
+        }
+
+        function renderBooksGrid(books) {
+            const grid = document.getElementById('booksGrid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            if (books.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1;">
+                        <div class="empty-state">
+                            <i class="fas fa-book-open empty-state-icon"></i>
+                            <h4>No books found</h4>
+                            <p>Try refining your search terms or picking another category.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            books.forEach((book, index) => {
+                const card = document.createElement('div');
+                card.className = 'card book-grid-card';
+                if (categoryChanged) {
+                    card.classList.add('category-animated');
+                    card.style.setProperty('--i', Math.min(index, 20)); // Cap stagger delay
+                }
+
+                let statusBadge = book.availableCopies > 0
+                    ? `<span class="badge badge-success"><i class="fas fa-check"></i> Available (${book.availableCopies})</span>`
+                    : `<span class="badge badge-danger"><i class="fas fa-times"></i> Unavailable</span>`;
+
+                card.innerHTML = `
+                    <div class="book-cover-placeholder">
+                        <i class="fas fa-book fa-3x"></i>
+                    </div>
+                    <h3 style="margin-top: 0.8rem; font-size: 1.15rem; line-height: 1.3;">${book.title}</h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;"><i class="fas fa-user-edit" style="font-size: 0.8rem; margin-right: 4px;"></i> ${book.author}</p>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);"><i class="fas fa-tag" style="font-size: 0.8rem; margin-right: 4px;"></i> ${isCategoryValid(book.category) ? book.category : `Legacy: ${book.category}`}</p>
+                    <div style="margin-top: auto; padding-top: 1rem; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color);">
+                        ${statusBadge}
+                        <small style="color: var(--text-muted); font-size: 0.78rem;">${book.totalCopies} Total</small>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            categoryChanged = false;
+        }
+
+        function updatePagination() {
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+
+            if (pageInfo) pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages || 1}`;
+            if (prevBtn) prevBtn.disabled = currentPage === 0;
+            if (nextBtn) nextBtn.disabled = currentPage >= totalPages - 1;
+        }
+
+        function prevPage() {
+            if (currentPage > 0) loadBooks(currentPage - 1);
+        }
+
+        function nextPage() {
+            if (currentPage < totalPages - 1) loadBooks(currentPage + 1);
+        }
+    </script>
+</body>
+
+</html>
