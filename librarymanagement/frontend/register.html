@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Library Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-left fade-in">
+                <h1>Join the Library!</h1>
+                <p style="margin-top: 1rem; opacity: 0.9; line-height: 1.6;">
+                    Create a free account to start borrowing books, tracking your reading history, and reserving your favorite titles.
+                </p>
+                <div style="margin-top: 3rem;">
+                    <i class="fas fa-user-plus fa-4x" style="opacity: 0.85;"></i>
+                </div>
+            </div>
+            <div class="auth-right fade-in-up stagger-1">
+                <h2 style="color: var(--primary-color); margin-bottom: 2rem; font-size: 2rem;">Register</h2>
+                
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Full Name</label>
+                        <input type="text" id="name" class="form-control" placeholder="John Doe" required autocomplete="name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <input type="email" id="email" class="form-control" placeholder="john@example.com" required autocomplete="email">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Phone Number</label>
+                        <input type="tel" id="phone" class="form-control" placeholder="+1234567890" autocomplete="tel">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" class="form-control" placeholder="Create a strong password" required autocomplete="new-password">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 2rem;">
+                        <label class="form-label" for="confirmPassword">Confirm Password</label>
+                        <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password" required autocomplete="new-password">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 0.9rem;">
+                        <i class="fas fa-user-check"></i> Register
+                    </button>
+                </form>
+                
+                <p style="text-align: center; margin-top: 2rem; color: var(--text-muted);">
+                    Already have an account? <a href="login.html" style="font-weight: 600;">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/api.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
