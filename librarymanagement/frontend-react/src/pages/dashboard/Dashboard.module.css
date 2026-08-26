@@ -1,0 +1,117 @@
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  transition: transform var(--transition-fast) var(--ease-smooth),
+      box-shadow var(--transition-fast) var(--ease-smooth),
+      background-color var(--transition-normal) ease,
+      border-color var(--transition-normal) ease;
+  cursor: default;
+}
+
+.statCard:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-hover);
+}
+
+.statIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast) var(--ease-smooth), background-color var(--transition-fast) ease;
+}
+
+.statCard:hover .statIcon {
+  transform: scale(1.08);
+}
+
+.statDetails h3 {
+  font-size: 1.8rem;
+  margin-bottom: 0.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  transition: color var(--transition-normal) ease;
+}
+
+.statDetails p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: var(--border-radius);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background-color: transparent;
+}
+
+.table tbody tr {
+  transition: background-color var(--transition-fast) ease;
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 180, 168, 0.04);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.badgeSuccess {
+  background-color: rgba(76, 175, 80, 0.12);
+  color: var(--success-color);
+}
+
+.badgeDanger {
+  background-color: rgba(255, 76, 76, 0.12);
+  color: var(--danger-color);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-muted);
+}

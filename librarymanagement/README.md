@@ -13,7 +13,7 @@ The UI features a customized Teal/Green theme applied to a sleek dashboard inter
 * **Modern UI**: Pure HTML/CSS without bulky frameworks, fully responsive, and includes a Dark/Light mode toggle.
 
 ## Technology Stack
-* **Frontend**: HTML5, CSS3, Vanilla JavaScript, Chart.js, FontAwesome.
+* **Frontend**: React 18, Vite, CSS Modules, TanStack Query, Lucide Icons, Recharts.
 * **Backend**: Java 17+, Spring Boot 3.2.x, Spring Security (JWT), Spring Data MongoDB.
 * **Database**: MongoDB.
 
@@ -42,18 +42,21 @@ Upon startup, a default **Admin account** will be seeded:
 * **Email:** `admin@library.com`
 * **Password:** `admin123`
 
-### 3. Frontend (HTML/CSS/JS)
-The frontend uses standard HTML files and asynchronous Fetch API calls to communicate with the backend. 
-Open a terminal in the `frontend` directory and start a local server:
+### 3. Frontend (React)
+The frontend is a modern React application built with Vite and React Query. 
+Open a terminal in the `frontend-react` directory:
 
 ```bash
-cd frontend
-# If you have python installed:
-python -m http.server 8000
-# OR if you have Node.js installed:
-npx serve
+cd frontend-react
+npm install
+npm run dev
 ```
-Then navigate to `http://localhost:8000` (or whatever port your static server opened) in your browser. You will be redirected to the login page.
+Then navigate to `http://localhost:5173` (or the port Vite provides) in your browser.
+
+To build for production:
+```bash
+npm run build
+```
 
 ## Testing Checklist
 - [x] Login with `admin@library.com` / `admin123`.

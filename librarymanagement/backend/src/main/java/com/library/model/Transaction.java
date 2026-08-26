@@ -3,6 +3,8 @@ package com.library.model;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import org.springframework.data.annotation.Transient;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -17,6 +19,12 @@ public class Transaction {
     private LocalDate returnDate;
     private Status status;
     private Double fineAmount;
+
+    @Transient
+    private String bookTitle;
+
+    @Transient
+    private String frontCoverUrl;
 
     public Transaction() {}
 
@@ -36,6 +44,10 @@ public class Transaction {
     public void setStatus(Status status) { this.status = status; }
     public Double getFineAmount() { return fineAmount; }
     public void setFineAmount(Double fineAmount) { this.fineAmount = fineAmount; }
+    public String getBookTitle() { return bookTitle; }
+    public void setBookTitle(String bookTitle) { this.bookTitle = bookTitle; }
+    public String getFrontCoverUrl() { return frontCoverUrl; }
+    public void setFrontCoverUrl(String frontCoverUrl) { this.frontCoverUrl = frontCoverUrl; }
 
     public enum Status { ISSUED, RETURNED, OVERDUE }
 }

@@ -61,7 +61,8 @@ public class TransactionService {
         transaction.setDueDate(request.getDueDate());
         transaction.setStatus(Transaction.Status.ISSUED);
 
-        return transactionRepository.save(transaction);
+        Transaction saved = transactionRepository.save(transaction);
+        return enrichTransaction(saved);
     }
 
     public Transaction returnBook(String transactionId) {
@@ -85,16 +86,25 @@ public class TransactionService {
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
 
-        return transactionRepository.save(transaction);
+        Transaction saved = transactionRepository.save(transaction);
+        return enrichTransaction(saved);
     }
 
     public Page<Transaction> getAllTransactions(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("issueDate").descending());
-        return transactionRepository.findAll(pageable);
+        return transactionRepository.findAll(pageable).map(this::enrichTransaction);
     }
 
     public Page<Transaction> getTransactionsByUser(String userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("issueDate").descending());
-        return transactionRepository.findByUserId(userId, pageable);
+        return transactionRepository.findByUserId(userId, pageable).map(this::enrichTransaction);
+    }
+
+    private Transaction enrichTransaction(Transaction transaction) {
+        bookRepository.findById(transaction.getBookId()).ifPresent(book -> {
+            transaction.setBookTitle(book.getTitle());
+            transaction.setFrontCoverUrl(book.getFrontCoverUrl());
+        });
+        return transaction;
     }
 }

@@ -18,6 +18,8 @@ public class Book {
     private String description;
     private Integer totalCopies;
     private Integer availableCopies;
+    private String frontCoverUrl;
+    private String backCoverUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -43,6 +45,10 @@ public class Book {
     public void setTotalCopies(Integer totalCopies) { this.totalCopies = totalCopies; }
     public Integer getAvailableCopies() { return availableCopies; }
     public void setAvailableCopies(Integer availableCopies) { this.availableCopies = availableCopies; }
+    public String getFrontCoverUrl() { return frontCoverUrl; }
+    public void setFrontCoverUrl(String frontCoverUrl) { this.frontCoverUrl = frontCoverUrl; }
+    public String getBackCoverUrl() { return backCoverUrl; }
+    public void setBackCoverUrl(String backCoverUrl) { this.backCoverUrl = backCoverUrl; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

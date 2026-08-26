@@ -1,0 +1,63 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  text-align: center;
+  font-size: 0.95rem;
+  transition: background-color var(--transition-fast) ease,
+    transform var(--transition-fast) var(--ease-smooth),
+    box-shadow var(--transition-fast) ease,
+    opacity var(--transition-fast) ease,
+    color var(--transition-fast) ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.btn:active {
+  transform: scale(0.98);
+  box-shadow: var(--shadow-active);
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.primary {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.primary:hover {
+  background-color: var(--primary-dark);
+  color: #fff;
+  text-decoration: none;
+}
+
+.danger {
+  background-color: var(--danger-color);
+  color: #fff;
+}
+
+.danger:hover {
+  background-color: var(--danger-hover);
+  color: #fff;
+  text-decoration: none;
+}
+
+.sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.875rem;
+  border-radius: 8px;
+}

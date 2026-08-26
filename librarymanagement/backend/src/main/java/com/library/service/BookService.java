@@ -93,4 +93,8 @@ public class BookService {
         }
         bookRepository.deleteById(id);
     }
+    
+    public Book saveBookDirectly(Book book) {
+        return bookRepository.save(book);
+    }
 }
