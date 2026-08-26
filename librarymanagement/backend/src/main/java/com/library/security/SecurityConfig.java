@@ -28,6 +28,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                // Allow public access to uploaded files (like book covers)
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/books/*/coverImage").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll() // Keeping just in case for older data or other static assets
                 .requestMatchers("/api/dashboard/admin", "/api/dashboard/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/users/**").hasRole("ADMIN") // Only admin can manage users
                 // Allow users to GET books, but only admin can modify

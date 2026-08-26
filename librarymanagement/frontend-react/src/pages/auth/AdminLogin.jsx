@@ -32,17 +32,14 @@ export const AdminLogin = () => {
       }
     },
     onError: (err) => {
-      const errorMsg = err.status === 401 || err.status === 403
-        ? 'Invalid admin credentials.'
-        : err.message || 'Invalid admin credentials.';
-      setError(errorMsg);
+      setError(err.message || 'Invalid admin credentials.');
     }
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    loginMutation.mutate({ email, password });
+    loginMutation.mutate({ email, password, adminPortal: true });
   };
 
   const leftContent = (

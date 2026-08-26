@@ -13,10 +13,12 @@ import org.springframework.web.multipart.MultipartFile;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.webp.WebpWriter;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import com.library.model.CoverImage;
+import com.library.repository.CoverImageRepository;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/books")
@@ -24,6 +26,9 @@ public class BookController {
 
     @Autowired
     private BookService bookService;
+
+    @Autowired
+    private CoverImageRepository coverImageRepository;
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Book>>> getAllBooks(
@@ -88,14 +93,6 @@ public class BookController {
 
         try {
             Book book = bookService.getBookById(id);
-            
-            Path uploadPath = Paths.get("uploads", "covers");
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            String filename = id + "-" + side + ".webp";
-            File outputFile = uploadPath.resolve(filename).toFile();
 
             ImmutableImage image = ImmutableImage.loader().fromBytes(file.getBytes());
             if (image.width > 800 || image.height > 800) {
@@ -106,9 +103,18 @@ public class BookController {
                 }
             }
             
-            image.output(WebpWriter.DEFAULT.withQ(90), outputFile);
+            byte[] webpBytes = image.bytes(WebpWriter.DEFAULT.withQ(90));
 
-            String fileUrl = "/uploads/covers/" + filename;
+            // Save to MongoDB CoverImage collection
+            CoverImage coverImage = coverImageRepository.findByBookIdAndSide(id, side)
+                    .orElse(new CoverImage());
+            coverImage.setBookId(id);
+            coverImage.setSide(side);
+            coverImage.setContentType("image/webp");
+            coverImage.setData(webpBytes);
+            coverImageRepository.save(coverImage);
+
+            String fileUrl = "/api/books/" + id + "/coverImage?side=" + side;
             if ("front".equals(side)) {
                 book.setFrontCoverUrl(fileUrl);
             } else {
@@ -121,5 +127,54 @@ public class BookController {
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to process image: " + e.getMessage()));
         }
+    }
+    
+    @DeleteMapping("/{id}/cover")
+    public ResponseEntity<ApiResponse<Book>> deleteCover(
+            @PathVariable String id,
+            @RequestParam("side") String side) {
+        
+        if (!"front".equals(side) && !"back".equals(side)) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Invalid side. Must be 'front' or 'back'"));
+        }
+
+        try {
+            Book book = bookService.getBookById(id);
+            
+            // Delete from MongoDB
+            coverImageRepository.deleteByBookIdAndSide(id, side);
+
+            // Clear the URL in the database
+            if ("front".equals(side)) {
+                book.setFrontCoverUrl(null);
+            } else {
+                book.setBackCoverUrl(null);
+            }
+
+            Book updatedBook = bookService.saveBookDirectly(book);
+            return ResponseEntity.ok(ApiResponse.success("Cover deleted successfully", updatedBook));
+            
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ApiResponse.error("Failed to delete cover: " + e.getMessage()));
+        }
+    }
+
+    // Publicly accessible via SecurityConfig
+    @GetMapping("/{id}/coverImage")
+    public ResponseEntity<byte[]> getCoverImage(
+            @PathVariable String id,
+            @RequestParam("side") String side) {
+        
+        Optional<CoverImage> coverOpt = coverImageRepository.findByBookIdAndSide(id, side);
+        
+        if (coverOpt.isPresent()) {
+            CoverImage cover = coverOpt.get();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(cover.getContentType()))
+                    .header(HttpHeaders.CACHE_CONTROL, "max-age=31536000") // Cache for 1 year
+                    .body(cover.getData());
+        }
+        
+        return ResponseEntity.notFound().build();
     }
 }

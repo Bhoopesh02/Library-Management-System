@@ -67,7 +67,24 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
-        return authenticateAndGenerateToken(request.getEmail(), request.getPassword());
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        
+        if (request.isAdminPortal()) {
+            if (userDetails.getUser().getRole() != User.Role.ADMIN) {
+                throw new RuntimeException("Only administrators can log in here.");
+            }
+        } else {
+            if (userDetails.getUser().getRole() == User.Role.ADMIN) {
+                throw new RuntimeException("Admin accounts must log in through the Administrator Portal.");
+            }
+        }
+
+        String token = jwtUtil.generateToken(userDetails);
+        return new AuthResponse(token, AuthResponse.UserDto.fromUser(userDetails.getUser()));
     }
 
     private AuthResponse authenticateAndGenerateToken(String email, String password) {

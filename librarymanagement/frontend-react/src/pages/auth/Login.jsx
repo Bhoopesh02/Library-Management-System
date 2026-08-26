@@ -40,7 +40,7 @@ export const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    loginMutation.mutate({ email, password });
+    loginMutation.mutate({ email, password, adminPortal: false });
   };
 
   const leftContent = (

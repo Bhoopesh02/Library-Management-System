@@ -9,6 +9,8 @@ import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
+import ImageLightbox from '../../components/ui/ImageLightbox';
+import lightboxStyles from '../../components/ui/ImageLightbox.module.css';
 import { fetchApi, API_BASE_URL } from '../../utils/api';
 import { BookCategories, isCategoryValid } from '../../utils/categories';
 
@@ -29,6 +31,9 @@ export const BrowseBooks = () => {
   
   // Local state for the input before form submission
   const [searchInput, setSearchInput] = useState(searchTerm);
+  
+  // State for image lightbox
+  const [lightboxData, setLightboxData] = useState(null);
 
   // Sync local input if URL changes externally
   useEffect(() => {
@@ -158,7 +163,9 @@ export const BrowseBooks = () => {
                         <img 
                           src={getImageUrl(b.frontCoverUrl)} 
                           alt="Cover" 
+                          className={lightboxStyles.clickableThumbnail}
                           style={{ width: '40px', height: '60px', objectFit: 'cover', borderRadius: '4px', backgroundColor: '#f0f0f0' }} 
+                          onClick={() => setLightboxData({ frontCoverUrl: getImageUrl(b.frontCoverUrl), backCoverUrl: getImageUrl(b.backCoverUrl), initialSide: 'front' })}
                         />
                       ) : (
                         <div style={{ width: '40px', height: '60px', borderRadius: '4px', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -200,6 +207,13 @@ export const BrowseBooks = () => {
           </Button>
         </div>
       </Card>
+      <ImageLightbox 
+        isOpen={!!lightboxData}
+        onClose={() => setLightboxData(null)}
+        frontCoverUrl={lightboxData?.frontCoverUrl}
+        backCoverUrl={lightboxData?.backCoverUrl}
+        initialSide={lightboxData?.initialSide}
+      />
     </DashboardLayout>
   );
 };

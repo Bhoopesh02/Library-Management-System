@@ -1,0 +1,123 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Ensure it's above everything else */
+  backdrop-filter: blur(4px);
+}
+
+.content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.image {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+}
+
+.badge {
+  position: absolute;
+  bottom: -40px;
+  background-color: rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 40px;
+  cursor: pointer;
+  z-index: 1001;
+  line-height: 1;
+  padding: 0 10px;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.closeBtn:hover {
+  transform: scale(1.1);
+  color: #ff4757;
+}
+
+.navBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  font-size: 30px;
+  cursor: pointer;
+  z-index: 1001;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.navBtn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.navLeft {
+  left: 30px;
+}
+
+.navRight {
+  right: 30px;
+}
+
+/* Reusable utility class for clickable thumbnails */
+.clickableThumbnail {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.clickableThumbnail:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.clickableThumbnail::after {
+  content: '🔍';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.clickableThumbnail:hover::after {
+  opacity: 1;
+}

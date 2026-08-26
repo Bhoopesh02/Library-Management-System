@@ -7,6 +7,8 @@ import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
+import ImageLightbox from '../../components/ui/ImageLightbox';
+import lightboxStyles from '../../components/ui/ImageLightbox.module.css';
 import { fetchApi, API_BASE_URL } from '../../utils/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -21,6 +23,9 @@ export const MyBooks = () => {
   const { user } = useAuth();
   const [page, setPage] = useState(0);
   const [filter, setFilter] = useState('ACTIVE'); // ACTIVE or ALL
+  
+  // State for image lightbox
+  const [lightboxData, setLightboxData] = useState(null);
   
   const { data, isLoading, isError } = useQuery({
     queryKey: ['userTransactionsHistory', user?.id, page],
@@ -97,7 +102,9 @@ export const MyBooks = () => {
                         <img 
                           src={getImageUrl(t.frontCoverUrl)} 
                           alt="Cover" 
+                          className={lightboxStyles.clickableThumbnail}
                           style={{ width: '40px', height: '60px', objectFit: 'cover', borderRadius: '4px', backgroundColor: '#f0f0f0' }} 
+                          onClick={() => setLightboxData({ frontCoverUrl: getImageUrl(t.frontCoverUrl), initialSide: 'front' })}
                         />
                       ) : (
                         <div style={{ width: '40px', height: '60px', borderRadius: '4px', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -135,6 +142,14 @@ export const MyBooks = () => {
           </Button>
         </div>
       </Card>
+      
+      <ImageLightbox 
+        isOpen={!!lightboxData}
+        onClose={() => setLightboxData(null)}
+        frontCoverUrl={lightboxData?.frontCoverUrl}
+        backCoverUrl={lightboxData?.backCoverUrl}
+        initialSide={lightboxData?.initialSide}
+      />
     </DashboardLayout>
   );
 };

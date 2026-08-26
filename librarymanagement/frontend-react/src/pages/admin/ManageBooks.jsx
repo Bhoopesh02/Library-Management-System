@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Search, Book, Edit, Trash2, CheckCircle, Ban, BookOpen } from 'lucide-react';
+import { Plus, Search, Book, Edit, Trash2, CheckCircle, Ban, BookOpen, Upload } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -8,6 +8,8 @@ import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
+import ImageLightbox from '../../components/ui/ImageLightbox';
+import lightboxStyles from '../../components/ui/ImageLightbox.module.css';
 import { fetchApi, API_BASE_URL } from '../../utils/api';
 import { BookCategories, isCategoryValid } from '../../utils/categories';
 
@@ -23,6 +25,9 @@ export const ManageBooks = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  
+  // State for image lightbox
+  const [lightboxData, setLightboxData] = useState(null);
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,6 +106,19 @@ export const ManageBooks = () => {
     onError: (err) => alert(`Failed to upload cover: ${err.message}`)
   });
 
+  const deleteCoverMutation = useMutation({
+    mutationFn: ({ bookId, side }) => fetchApi(`/books/${bookId}/cover?side=${side}`, { method: 'DELETE' }),
+    onSuccess: (res, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['adminBooks'] });
+      setFormData(prev => ({
+        ...prev,
+        frontCoverUrl: variables.side === 'front' ? null : prev.frontCoverUrl,
+        backCoverUrl: variables.side === 'back' ? null : prev.backCoverUrl
+      }));
+    },
+    onError: (err) => alert(`Failed to remove cover: ${err.message}`)
+  });
+
   const handleCoverUpload = (side, e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -112,6 +130,7 @@ export const ManageBooks = () => {
     }
     
     uploadCoverMutation.mutate({ bookId: formData.id, side, file });
+    e.target.value = null; // Reset file input after triggering upload
   };
 
   const handleSearch = (e) => {
@@ -243,7 +262,9 @@ export const ManageBooks = () => {
                         <img 
                           src={getImageUrl(b.frontCoverUrl)} 
                           alt="Cover" 
+                          className={lightboxStyles.clickableThumbnail}
                           style={{ width: '40px', height: '60px', objectFit: 'cover', borderRadius: '4px', backgroundColor: '#f0f0f0' }} 
+                          onClick={() => setLightboxData({ frontCoverUrl: getImageUrl(b.frontCoverUrl), backCoverUrl: getImageUrl(b.backCoverUrl), initialSide: 'front' })}
                         />
                       ) : (
                         <div style={{ width: '40px', height: '60px', borderRadius: '4px', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -404,11 +425,41 @@ export const ManageBooks = () => {
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Front Cover</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
                     {formData.frontCoverUrl ? (
-                      <img src={getImageUrl(formData.frontCoverUrl)} alt="Front Cover" style={{ width: '100px', height: '150px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ccc' }} />
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img 
+                          src={getImageUrl(formData.frontCoverUrl)} 
+                          alt="Front Cover" 
+                          className={lightboxStyles.clickableThumbnail}
+                          style={{ width: '100px', height: '150px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ccc' }} 
+                          onClick={() => setLightboxData({ frontCoverUrl: getImageUrl(formData.frontCoverUrl), backCoverUrl: getImageUrl(formData.backCoverUrl), initialSide: 'front' })}
+                        />
+                        <button
+                          type="button"
+                          title="Remove front cover"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to remove the front cover?')) {
+                              deleteCoverMutation.mutate({ bookId: formData.id, side: 'front' });
+                            }
+                          }}
+                          disabled={deleteCoverMutation.isPending}
+                          style={{
+                            position: 'absolute', top: '-8px', right: '-8px',
+                            background: 'var(--danger-color)', color: 'white', border: 'none',
+                            borderRadius: '50%', width: '24px', height: '24px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     ) : (
                       <div style={{ width: '100px', height: '150px', backgroundColor: '#f1f5f9', border: '1px dashed #cbd5e1', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>No Cover</div>
                     )}
-                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleCoverUpload('front', e)} disabled={uploadCoverMutation.isPending} style={{ fontSize: '0.85rem' }} />
+                    <label style={{ cursor: uploadCoverMutation.isPending ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#334155', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 500, opacity: uploadCoverMutation.isPending ? 0.7 : 1 }}>
+                      <Upload size={14} /> {formData.frontCoverUrl ? 'Replace Cover' : 'Upload Cover'}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleCoverUpload('front', e)} disabled={uploadCoverMutation.isPending} style={{ display: 'none' }} />
+                    </label>
                   </div>
                 </div>
                 
@@ -416,11 +467,41 @@ export const ManageBooks = () => {
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 600 }}>Back Cover (Optional)</label>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
                     {formData.backCoverUrl ? (
-                      <img src={getImageUrl(formData.backCoverUrl)} alt="Back Cover" style={{ width: '100px', height: '150px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ccc' }} />
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img 
+                          src={getImageUrl(formData.backCoverUrl)} 
+                          alt="Back Cover" 
+                          className={lightboxStyles.clickableThumbnail}
+                          style={{ width: '100px', height: '150px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ccc' }} 
+                          onClick={() => setLightboxData({ frontCoverUrl: getImageUrl(formData.frontCoverUrl), backCoverUrl: getImageUrl(formData.backCoverUrl), initialSide: 'back' })}
+                        />
+                        <button
+                          type="button"
+                          title="Remove back cover"
+                          onClick={() => {
+                            if (window.confirm('Are you sure you want to remove the back cover?')) {
+                              deleteCoverMutation.mutate({ bookId: formData.id, side: 'back' });
+                            }
+                          }}
+                          disabled={deleteCoverMutation.isPending}
+                          style={{
+                            position: 'absolute', top: '-8px', right: '-8px',
+                            background: 'var(--danger-color)', color: 'white', border: 'none',
+                            borderRadius: '50%', width: '24px', height: '24px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     ) : (
                       <div style={{ width: '100px', height: '150px', backgroundColor: '#f1f5f9', border: '1px dashed #cbd5e1', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>No Cover</div>
                     )}
-                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleCoverUpload('back', e)} disabled={uploadCoverMutation.isPending} style={{ fontSize: '0.85rem' }} />
+                    <label style={{ cursor: uploadCoverMutation.isPending ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#334155', padding: '0.4rem 0.8rem', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 500, opacity: uploadCoverMutation.isPending ? 0.7 : 1 }}>
+                      <Upload size={14} /> {formData.backCoverUrl ? 'Replace Cover' : 'Upload Cover'}
+                      <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => handleCoverUpload('back', e)} disabled={uploadCoverMutation.isPending} style={{ display: 'none' }} />
+                    </label>
                   </div>
                 </div>
               </div>
@@ -438,6 +519,14 @@ export const ManageBooks = () => {
           </div>
         </div>
       )}
+
+      <ImageLightbox 
+        isOpen={!!lightboxData}
+        onClose={() => setLightboxData(null)}
+        frontCoverUrl={lightboxData?.frontCoverUrl}
+        backCoverUrl={lightboxData?.backCoverUrl}
+        initialSide={lightboxData?.initialSide}
+      />
     </DashboardLayout>
   );
 };
