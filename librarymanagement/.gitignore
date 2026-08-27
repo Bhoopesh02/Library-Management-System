@@ -36,9 +36,11 @@ buildNumber.properties
 
 # Spring Boot & Backend
 backend/.env
+backend/.env.*
 backend/target/
 backend/uploads/
 .env
+.env.*
 
 # Node & Frontend
 node_modules/
@@ -57,10 +59,7 @@ frontend-react/node_modules/
 frontend-react/dist/
 frontend-react/build/
 frontend-react/.env
-frontend-react/.env.local
-frontend-react/.env.development.local
-frontend-react/.env.test.local
-frontend-react/.env.production.local
+frontend-react/.env.*
 frontend-react/.eslintcache
 
 # OS generated files

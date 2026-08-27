@@ -102,9 +102,14 @@ export const AdminLogin = () => {
       </form>
 
       <div style={{ textAlign: 'center', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
-        <Link to="/login" style={{ color: 'var(--text-muted)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-          <User size={18} /> Return to Member Login
-        </Link>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '2rem' }}>
+          <Link to="/login" style={{ color: 'var(--text-muted)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <User size={18} /> Return to Member Login
+          </Link>
+          <Link to="/admin-register" style={{ color: 'var(--text-muted)', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ShieldCheck size={18} /> Register Admin
+          </Link>
+        </div>
       </div>
     </AuthLayout>
   );
