@@ -12,6 +12,7 @@ import com.library.model.User;
 import com.library.repository.UserRepository;
 import com.library.security.JwtUtil;
 import com.library.security.RateLimiterService;
+import com.library.security.RefreshTokenService;
 import com.library.security.UserDetailsImpl;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -138,10 +139,23 @@ public class AuthService {
         return authenticateAndGenerateToken(request.getEmail(), request.getPassword());
     }
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
     public AuthResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
+        rateLimiterService.checkLoginAllowed(request.getEmail());
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+        } catch (org.springframework.security.core.AuthenticationException e) {
+            rateLimiterService.recordFailedLogin(request.getEmail());
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+
+        rateLimiterService.resetLoginAttempts(request.getEmail());
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
@@ -156,7 +170,8 @@ public class AuthService {
         }
 
         String token = jwtUtil.generateToken(userDetails);
-        return new AuthResponse(token, AuthResponse.UserDto.fromUser(userDetails.getUser()));
+        String refreshToken = refreshTokenService.createRefreshToken(userDetails.getUser().getId()).getToken();
+        return new AuthResponse(token, refreshToken, AuthResponse.UserDto.fromUser(userDetails.getUser()));
     }
 
     private AuthResponse authenticateAndGenerateToken(String email, String password) {
@@ -166,7 +181,8 @@ public class AuthService {
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         String token = jwtUtil.generateToken(userDetails);
+        String refreshToken = refreshTokenService.createRefreshToken(userDetails.getUser().getId()).getToken();
 
-        return new AuthResponse(token, AuthResponse.UserDto.fromUser(userDetails.getUser()));
+        return new AuthResponse(token, refreshToken, AuthResponse.UserDto.fromUser(userDetails.getUser()));
     }
 }

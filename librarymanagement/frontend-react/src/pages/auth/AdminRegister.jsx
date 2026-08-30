@@ -30,8 +30,9 @@ export const AdminRegister = () => {
     }),
     onSuccess: (response) => {
       if (response.success) {
-        const { token, user } = response.data;
-        login(user, token);
+        const { accessToken, refreshToken, token, user } = response.data;
+        const finalToken = accessToken || token;
+        login(user, finalToken, refreshToken);
         navigate('/admin');
       }
     },

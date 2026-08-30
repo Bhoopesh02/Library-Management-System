@@ -9,12 +9,19 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [refreshToken, setRefreshToken] = useState(() => localStorage.getItem('refreshToken'));
 
-  const login = (userData, authToken) => {
+  const login = (userData, authToken, authRefreshToken) => {
     setUser(userData);
     setToken(authToken);
+    if (authRefreshToken) {
+      setRefreshToken(authRefreshToken);
+    }
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', authToken);
+    if (authRefreshToken) {
+      localStorage.setItem('refreshToken', authRefreshToken);
+    }
   };
 
   const logout = async () => {
@@ -22,7 +29,11 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/logout`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ refreshToken })
         });
       }
     } catch (e) {
@@ -30,8 +41,10 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setUser(null);
       setToken(null);
+      setRefreshToken(null);
       localStorage.removeItem('user');
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
     }
   };
 
@@ -42,8 +55,16 @@ export const AuthProvider = ({ children }) => {
         if (!e.newValue) {
           setUser(null);
           setToken(null);
+          setRefreshToken(null);
         } else {
           setToken(e.newValue);
+        }
+      }
+      if (e.key === 'refreshToken') {
+        if (!e.newValue) {
+          setRefreshToken(null);
+        } else {
+          setRefreshToken(e.newValue);
         }
       }
       if (e.key === 'user' && e.newValue) {
@@ -56,7 +77,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, refreshToken, login, logout, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );

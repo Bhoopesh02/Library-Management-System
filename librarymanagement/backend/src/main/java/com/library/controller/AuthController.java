@@ -50,9 +50,73 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
     
-    // Logout is handled purely on frontend by deleting the token
+    @Autowired
+    private com.library.security.RefreshTokenService refreshTokenService;
+    
+    @Autowired
+    private com.library.security.JwtUtil jwtUtil;
+    
+    @Autowired
+    private com.library.security.UserDetailsServiceImpl userDetailsService;
+
+    @Autowired
+    private com.library.repository.UserRepository userRepository;
+
+    @Autowired
+    private com.library.security.TokenBlocklistService tokenBlocklistService;
+
+    // Logout now revokes the refresh token AND blocklists the access token
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout() {
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @Valid @RequestBody com.library.dto.TokenRefreshRequest request,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
+        
+        // 1. Revoke refresh token
+        refreshTokenService.deleteByToken(request.getRefreshToken());
+        
+        // 2. Blocklist current access token
+        String authHeader = httpRequest.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String jwt = authHeader.substring(7);
+            try {
+                java.util.Date expiration = jwtUtil.extractExpiration(jwt);
+                tokenBlocklistService.blockToken(jwt, expiration);
+            } catch (Exception e) {
+                // Token already expired or invalid, ignore
+            }
+        }
+        
         return ResponseEntity.ok(ApiResponse.success("Logout successful", null));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<com.library.dto.TokenRefreshResponse>> refreshToken(@Valid @RequestBody com.library.dto.TokenRefreshRequest request) {
+        return refreshTokenService.findByToken(request.getRefreshToken())
+                .map(refreshTokenService::verifyExpiration)
+                .map(oldRefreshToken -> {
+                    // Refresh token is valid. Rotate it.
+                    com.library.model.RefreshToken newRefreshToken = refreshTokenService.rotateRefreshToken(oldRefreshToken);
+                    
+                    String email = userRepository.findById(newRefreshToken.getUserId())
+                            .orElseThrow(() -> new RuntimeException("User not found"))
+                            .getEmail();
+                            
+                    org.springframework.security.core.userdetails.UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+                    
+                    String token = jwtUtil.generateToken(userDetails);
+                    return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", 
+                            new com.library.dto.TokenRefreshResponse(token, newRefreshToken.getToken())));
+                })
+                .orElseThrow(() -> {
+                    // Token not found in DB. Since we delete tokens upon use (rotation), 
+                    // if someone tries to use a token that is not in the DB, it's either 
+                    // a logged-out token or an already-used token (potential theft).
+                    // As a precaution, we could invalidate ALL refresh tokens for the user here
+                    // if we were passing the userId in the request or extracting it from an expired JWT.
+                    // For now, we reject the request with 401.
+                    return new org.springframework.web.server.ResponseStatusException(
+                            org.springframework.http.HttpStatus.UNAUTHORIZED, 
+                            "Refresh token is invalid or has already been used!");
+                });
     }
 }

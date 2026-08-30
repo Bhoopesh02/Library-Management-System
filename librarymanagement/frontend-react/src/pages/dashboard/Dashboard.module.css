@@ -115,3 +115,67 @@
   padding: 3rem 1rem;
   color: var(--text-muted);
 }
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chartCard {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartTitle {
+  margin-bottom: 1rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.chartWrapper {
+  height: 300px;
+  width: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+@media (max-width: 992px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .statCard {
+    padding: 1rem 1.25rem;
+  }
+
+  .statIcon {
+    width: 42px;
+    height: 42px;
+  }
+
+  .statDetails h3 {
+    font-size: 1.5rem;
+  }
+
+  .chartsGrid {
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .chartWrapper {
+    height: 280px;
+  }
+}
+

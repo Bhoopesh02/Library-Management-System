@@ -24,25 +24,10 @@ export const AdminDashboard = () => {
   const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
   const subtitle = today.toLocaleDateString(undefined, dateOptions);
 
-  // Mock data for charts (same as original Chart.js implementation)
-  const activityData = [
-    { name: 'Jan', issued: 65 },
-    { name: 'Feb', issued: 59 },
-    { name: 'Mar', issued: 80 },
-    { name: 'Apr', issued: 81 },
-    { name: 'May', issued: 56 },
-    { name: 'Jun', issued: 55 },
-    { name: 'Jul', issued: 40 },
-  ];
-
-  const categoryData = [
-    { name: 'Mathematics', value: 30 },
-    { name: 'Programming Languages', value: 20 },
-    { name: 'Fiction', value: 15 },
-    { name: 'Science and Nature', value: 35 },
-  ];
+  const activityData = stats.activityData || [];
+  const categoryData = stats.categoryData || [];
   
-  const COLORS = ['#00B4A8', '#45D1C7', '#008F85', '#7CEAE2'];
+  const COLORS = ['#00B4A8', '#45D1C7', '#008F85', '#7CEAE2', '#2DD4BF', '#0EA5E9', '#F59E0B', '#10B981'];
 
   return (
     <DashboardLayout title="Overview" subtitle={subtitle}>
@@ -93,15 +78,15 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
-        <Card>
-          <h3 style={{ marginBottom: '1rem' }}>Library Activity</h3>
-          <div style={{ height: 300 }}>
+      <div className={styles.chartsGrid}>
+        <Card className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Library Activity</h3>
+          <div className={styles.chartWrapper}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={activityData}>
+              <LineChart data={activityData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)' }} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: '0.8rem' }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--text-muted)', fontSize: '0.8rem' }} />
                 <RechartsTooltip 
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
@@ -118,18 +103,18 @@ export const AdminDashboard = () => {
           </div>
         </Card>
         
-        <Card>
-          <h3 style={{ marginBottom: '1rem' }}>Book Categories</h3>
-          <div style={{ height: 300 }}>
+        <Card className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Book Categories</h3>
+          <div className={styles.chartWrapper}>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                 <Pie
                   data={categoryData}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
+                  cy="45%"
+                  innerRadius={50}
+                  outerRadius={75}
+                  paddingAngle={4}
                   dataKey="value"
                 >
                   {categoryData.map((entry, index) => (
@@ -137,7 +122,17 @@ export const AdminDashboard = () => {
                   ))}
                 </Pie>
                 <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                <Legend 
+                  verticalAlign="bottom" 
+                  align="center"
+                  iconType="circle" 
+                  iconSize={10}
+                  wrapperStyle={{ 
+                    fontSize: '0.8rem', 
+                    paddingTop: '8px',
+                    lineHeight: '1.4'
+                  }} 
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

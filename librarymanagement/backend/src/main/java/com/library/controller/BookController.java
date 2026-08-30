@@ -15,6 +15,7 @@ import com.sksamuel.scrimage.webp.WebpWriter;
 
 import com.library.model.CoverImage;
 import com.library.repository.CoverImageRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.MediaType;
 import org.springframework.http.HttpHeaders;
 
@@ -30,6 +31,7 @@ public class BookController {
     @Autowired
     private CoverImageRepository coverImageRepository;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Book>>> getAllBooks(
             @RequestParam(required = false) String search,
@@ -40,13 +42,15 @@ public class BookController {
         return ResponseEntity.ok(ApiResponse.success("Books retrieved successfully", books));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Book>> getBookById(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<Book>> getBookById(@PathVariable("id") String id) {
         Book book = bookService.getBookById(id);
         return ResponseEntity.ok(ApiResponse.success("Book retrieved successfully", book));
     }
 
     // Only ADMIN (protected by SecurityConfig)
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @PostMapping
     public ResponseEntity<ApiResponse<Book>> addBook(@Valid @RequestBody BookRequest request) {
         Book book = bookService.addBook(request);
@@ -54,23 +58,26 @@ public class BookController {
     }
 
     // Only ADMIN
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Book>> updateBook(@PathVariable String id, @Valid @RequestBody BookRequest request) {
+    public ResponseEntity<ApiResponse<Book>> updateBook(@PathVariable("id") String id, @Valid @RequestBody BookRequest request) {
         Book book = bookService.updateBook(id, request);
         return ResponseEntity.ok(ApiResponse.success("Book updated successfully", book));
     }
 
     // Only ADMIN
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable("id") String id) {
         bookService.deleteBook(id);
         return ResponseEntity.ok(ApiResponse.success("Book deleted successfully", null));
     }
     
     // Only ADMIN
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @PostMapping("/{id}/cover")
     public ResponseEntity<ApiResponse<Book>> uploadCover(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             @RequestParam("side") String side,
             @RequestParam("file") MultipartFile file) {
         
@@ -94,7 +101,14 @@ public class BookController {
         try {
             Book book = bookService.getBookById(id);
 
-            ImmutableImage image = ImmutableImage.loader().fromBytes(file.getBytes());
+            ImmutableImage image;
+            try {
+                image = ImmutableImage.loader().fromBytes(file.getBytes());
+            } catch (Exception e) {
+                // Magic byte validation failed - file is not a valid image
+                return ResponseEntity.badRequest().body(ApiResponse.error("Invalid image format or corrupted file."));
+            }
+
             if (image.width > 800 || image.height > 800) {
                 if (image.width > image.height) {
                     image = image.scaleToWidth(800);
@@ -129,9 +143,10 @@ public class BookController {
         }
     }
     
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @DeleteMapping("/{id}/cover")
     public ResponseEntity<ApiResponse<Book>> deleteCover(
-            @PathVariable String id,
+            @PathVariable("id") String id,
             @RequestParam("side") String side) {
         
         if (!"front".equals(side) && !"back".equals(side)) {

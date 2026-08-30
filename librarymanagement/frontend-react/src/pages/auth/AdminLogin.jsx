@@ -22,12 +22,15 @@ export const AdminLogin = () => {
     }),
     onSuccess: (response) => {
       if (response.success) {
-        const { token, user } = response.data;
+        const { accessToken, refreshToken, token, user } = response.data;
+        const finalToken = accessToken || token;
+        
         if (user.role !== 'ADMIN') {
-          setError('This account does not have administrator access.');
+          setError('Access denied. Administrator privileges required.');
           return;
         }
-        login(user, token);
+
+        login(user, finalToken, refreshToken);
         navigate('/admin');
       }
     },

@@ -6,6 +6,7 @@ import com.library.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,6 +16,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<User>>> getAllUsers(
             @RequestParam(required = false) String search,
@@ -23,11 +25,13 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Users retrieved", userService.getAllUsers(search, page, size)));
     }
 
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("User retrieved", userService.getUserById(id)));
     }
 
+    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<User>> updateUserStatus(@PathVariable String id, @RequestParam User.Status status) {
         return ResponseEntity.ok(ApiResponse.success("User status updated", userService.updateUserStatus(id, status)));

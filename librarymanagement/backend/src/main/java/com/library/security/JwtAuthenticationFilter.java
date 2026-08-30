@@ -23,6 +23,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    @Autowired
+    private TokenBlocklistService tokenBlocklistService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -34,6 +37,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
+            
+            // Check Blocklist FIRST!
+            if (tokenBlocklistService.isBlocklisted(jwt)) {
+                // If it's blocklisted, we skip authentication for this request and let it fall through as unauthenticated
+                filterChain.doFilter(request, response);
+                return;
+            }
+            
             try {
                 username = jwtUtil.extractUsername(jwt);
             } catch (Exception e) {
