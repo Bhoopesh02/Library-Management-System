@@ -1,0 +1,8 @@
+target/
+.env
+.mvn/
+*.md
+.vscode/
+.idea/
+*.log
+uploads/
