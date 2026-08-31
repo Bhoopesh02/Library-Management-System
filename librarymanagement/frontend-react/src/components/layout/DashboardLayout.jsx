@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { BookOpen, Home, Search, Book, Users, ArrowRightLeft, CreditCard, LogOut, User as UserIcon } from 'lucide-react';
 import styles from './DashboardLayout.module.css';
 import { useAuth } from '../../context/AuthContext';
-
+import { Sidebar } from './Sidebar';
 export const DashboardLayout = ({ title, subtitle, children }) => {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
@@ -27,29 +27,7 @@ export const DashboardLayout = ({ title, subtitle, children }) => {
 
   return (
     <div className={styles.container}>
-      <aside className={styles.sidebar}>
-        <div className={styles.logo}>
-          <BookOpen color="white" />
-        </div>
-        <ul className={styles.navMenu}>
-          {links.map(l => (
-            <li key={l.id} className={styles.navItem} title={l.text}>
-              <NavLink 
-                to={l.to} 
-                end 
-                className={({ isActive }) => `${styles.navLink} ${isActive ? styles.active : ''}`}
-              >
-                <l.icon size={22} />
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-        <div style={{ marginTop: 'auto' }}>
-          <button className={styles.logoutBtn} onClick={logout} title="Logout">
-            <LogOut size={22} />
-          </button>
-        </div>
-      </aside>
+      <Sidebar links={links} onLogout={logout} />
 
       <main className={styles.mainContent}>
         <header className={styles.header}>
