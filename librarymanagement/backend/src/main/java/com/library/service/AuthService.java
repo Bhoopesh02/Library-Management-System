@@ -9,7 +9,10 @@ import com.library.exception.FeatureDisabledException;
 import com.library.exception.InvalidCredentialsException;
 import com.library.exception.RateLimitExceededException;
 import com.library.model.User;
+import com.library.model.OtpToken;
 import com.library.repository.UserRepository;
+import com.library.repository.OtpRepository;
+import com.library.dto.SendOtpRequest;
 import com.library.security.JwtUtil;
 import com.library.security.RateLimiterService;
 import com.library.security.RefreshTokenService;
@@ -38,6 +41,12 @@ public class AuthService {
     private UserRepository userRepository;
 
     @Autowired
+    private OtpRepository otpRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -57,6 +66,9 @@ public class AuthService {
 
     @Value("${app.seed-default-admin:false}")
     private boolean seedDefaultAdmin;
+
+    @Value("${app.otp.expiration-minutes:5}")
+    private int otpExpirationMinutes;
 
     @PostConstruct
     public void init() {
@@ -81,11 +93,56 @@ public class AuthService {
         }
     }
 
-    public AuthResponse registerUser(RegisterRequest request) {
+    public void sendRegistrationOtp(SendOtpRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("Email is already taken!");
+            throw new DuplicateResourceException("Email is already registered!");
         }
 
+        // Generate 6-digit OTP
+        String otpCode = String.format("%06d", new java.util.Random().nextInt(999999));
+
+        OtpToken otpToken = otpRepository.findByEmail(request.getEmail()).orElse(new OtpToken());
+        
+        // Simple rate limiting (60 seconds cooldown)
+        if (otpToken.getCreatedAt() != null && otpToken.getCreatedAt().plusSeconds(60).isAfter(LocalDateTime.now())) {
+            throw new RateLimitExceededException("Please wait before requesting a new OTP.");
+        }
+
+        otpToken.setEmail(request.getEmail());
+        otpToken.setOtpCode(otpCode);
+        otpToken.setExpiryTime(LocalDateTime.now().plusMinutes(otpExpirationMinutes));
+        otpToken.setAttempts(0);
+        otpToken.setCreatedAt(LocalDateTime.now());
+
+        otpRepository.save(otpToken);
+
+        emailService.sendOtpEmail(request.getEmail(), otpCode);
+    }
+
+    public AuthResponse registerUser(RegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new DuplicateResourceException("Email is already taken!");
+        }
+
+        OtpToken otpToken = otpRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("No pending registration found for this email. Please request an OTP."));
+
+        if (otpToken.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new InvalidCredentialsException("OTP has expired. Please request a new one.");
+        }
+
+        if (otpToken.getAttempts() >= 5) {
+            otpRepository.delete(otpToken);
+            throw new InvalidCredentialsException("Too many invalid attempts. Please request a new OTP.");
+        }
+
+        if (!otpToken.getOtpCode().equals(request.getOtpCode())) {
+            otpToken.setAttempts(otpToken.getAttempts() + 1);
+            otpRepository.save(otpToken);
+            throw new InvalidCredentialsException("Invalid OTP code.");
+        }
+
+        // OTP verified successfully, create user
         User user = new User();
         user.setName(request.getName());
         user.setEmail(request.getEmail());
@@ -96,6 +153,7 @@ public class AuthService {
         user.setCreatedAt(LocalDateTime.now());
 
         userRepository.save(user);
+        otpRepository.delete(otpToken);
 
         return authenticateAndGenerateToken(request.getEmail(), request.getPassword());
     }

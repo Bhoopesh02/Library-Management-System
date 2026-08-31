@@ -5,6 +5,7 @@ import com.library.dto.AuthResponse;
 import com.library.dto.LoginRequest;
 import com.library.dto.RegisterAdminRequest;
 import com.library.dto.RegisterRequest;
+import com.library.dto.SendOtpRequest;
 import com.library.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -22,6 +23,12 @@ public class AuthController {
 
     @Value("${app.admin.trust-proxy-headers:false}")
     private boolean trustProxyHeaders;
+
+    @PostMapping("/send-otp")
+    public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
+        authService.sendRegistrationOtp(request);
+        return ResponseEntity.ok(ApiResponse.success("OTP sent to email successfully", null));
+    }
 
     @PostMapping("/register-admin")
     public ResponseEntity<ApiResponse<AuthResponse>> registerAdmin(@Valid @RequestBody RegisterAdminRequest request, HttpServletRequest httpRequest) {

@@ -16,6 +16,9 @@ public class RegisterRequest {
 
     private String phone;
 
+    @NotBlank(message = "OTP code is required")
+    private String otpCode;
+
     public RegisterRequest() {}
 
     public String getName() { return name; }
@@ -26,4 +29,6 @@ public class RegisterRequest {
     public void setPassword(String password) { this.password = password; }
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+    public String getOtpCode() { return otpCode; }
+    public void setOtpCode(String otpCode) { this.otpCode = otpCode; }
 }
