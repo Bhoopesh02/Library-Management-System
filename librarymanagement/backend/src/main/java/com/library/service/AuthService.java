@@ -55,6 +55,9 @@ public class AuthService {
     @Value("${app.admin.registration-enabled:true}")
     private boolean registrationEnabled;
 
+    @Value("${app.seed-default-admin:false}")
+    private boolean seedDefaultAdmin;
+
     @PostConstruct
     public void init() {
         if (adminSecretKey == null || adminSecretKey.trim().isEmpty()) {
@@ -65,7 +68,7 @@ public class AuthService {
             this.registrationEnabled = false;
         }
 
-        if (userRepository.findByEmail("admin@library.com").isEmpty()) {
+        if (seedDefaultAdmin && userRepository.findByEmail("admin@library.com").isEmpty()) {
             User admin = new User();
             admin.setName("Library Admin");
             admin.setEmail("admin@library.com");
@@ -74,7 +77,7 @@ public class AuthService {
             admin.setStatus(User.Status.ACTIVE);
             admin.setCreatedAt(LocalDateTime.now());
             userRepository.save(admin);
-            System.out.println("Default admin user seeded: admin@library.com / admin123");
+            logger.info("Default admin user seeded successfully.");
         }
     }
 
@@ -143,21 +146,40 @@ public class AuthService {
     private RefreshTokenService refreshTokenService;
 
     public AuthResponse login(LoginRequest request) {
+        long start, end;
+        
+        start = System.currentTimeMillis();
         rateLimiterService.checkLoginAllowed(request.getEmail());
+        end = System.currentTimeMillis();
+        logger.info("Step 1: rateLimiterService.checkLoginAllowed() took {}ms", (end - start));
 
-        Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-            );
-        } catch (org.springframework.security.core.AuthenticationException e) {
+        start = System.currentTimeMillis();
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    rateLimiterService.recordFailedLogin(request.getEmail());
+                    return new InvalidCredentialsException("Invalid email or password");
+                });
+        end = System.currentTimeMillis();
+        logger.info("Step 2: userRepository.findByEmail() took {}ms", (end - start));
+
+        start = System.currentTimeMillis();
+        boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
+        end = System.currentTimeMillis();
+        logger.info("Step 3: passwordEncoder.matches() took {}ms", (end - start));
+
+        if (!matches) {
+            rateLimiterService.recordFailedLogin(request.getEmail());
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
+        
+        if (user.getStatus() != User.Status.ACTIVE) {
             rateLimiterService.recordFailedLogin(request.getEmail());
             throw new InvalidCredentialsException("Invalid email or password");
         }
 
         rateLimiterService.resetLoginAttempts(request.getEmail());
 
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+        UserDetailsImpl userDetails = new UserDetailsImpl(user);
         
         if (request.isAdminPortal()) {
             if (userDetails.getUser().getRole() != User.Role.ADMIN) {
@@ -169,8 +191,16 @@ public class AuthService {
             }
         }
 
+        start = System.currentTimeMillis();
         String token = jwtUtil.generateToken(userDetails);
+        end = System.currentTimeMillis();
+        logger.info("Step 4: jwtUtil.generateToken() took {}ms", (end - start));
+        
+        start = System.currentTimeMillis();
         String refreshToken = refreshTokenService.createRefreshToken(userDetails.getUser().getId()).getToken();
+        end = System.currentTimeMillis();
+        logger.info("Step 5: refreshTokenService.createRefreshToken() took {}ms", (end - start));
+        
         return new AuthResponse(token, refreshToken, AuthResponse.UserDto.fromUser(userDetails.getUser()));
     }
 
