@@ -146,26 +146,15 @@ public class AuthService {
     private RefreshTokenService refreshTokenService;
 
     public AuthResponse login(LoginRequest request) {
-        long start, end;
-        
-        start = System.currentTimeMillis();
         rateLimiterService.checkLoginAllowed(request.getEmail());
-        end = System.currentTimeMillis();
-        logger.info("Step 1: rateLimiterService.checkLoginAllowed() took {}ms", (end - start));
 
-        start = System.currentTimeMillis();
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
                     rateLimiterService.recordFailedLogin(request.getEmail());
                     return new InvalidCredentialsException("Invalid email or password");
                 });
-        end = System.currentTimeMillis();
-        logger.info("Step 2: userRepository.findByEmail() took {}ms", (end - start));
 
-        start = System.currentTimeMillis();
         boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
-        end = System.currentTimeMillis();
-        logger.info("Step 3: passwordEncoder.matches() took {}ms", (end - start));
 
         if (!matches) {
             rateLimiterService.recordFailedLogin(request.getEmail());
@@ -191,15 +180,8 @@ public class AuthService {
             }
         }
 
-        start = System.currentTimeMillis();
         String token = jwtUtil.generateToken(userDetails);
-        end = System.currentTimeMillis();
-        logger.info("Step 4: jwtUtil.generateToken() took {}ms", (end - start));
-        
-        start = System.currentTimeMillis();
         String refreshToken = refreshTokenService.createRefreshToken(userDetails.getUser().getId()).getToken();
-        end = System.currentTimeMillis();
-        logger.info("Step 5: refreshTokenService.createRefreshToken() took {}ms", (end - start));
         
         return new AuthResponse(token, refreshToken, AuthResponse.UserDto.fromUser(userDetails.getUser()));
     }
