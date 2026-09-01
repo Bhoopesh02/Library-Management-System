@@ -42,7 +42,18 @@ The backend REST API will start on `http://localhost:8080`.
 **Admin Account Setup:**
 For security reasons, admin accounts are no longer hardcoded. To create an admin account:
 1. Ensure `app.admin.secret-key` is configured securely in your environment or `application.properties`.
-2. Use the `/api/auth/register-admin` endpoint and provide the `adminSecret` that matches this key.
+2. Use the `/api/auth/register-admin` endpoint and provide the `adminSecret` that matches this key. For example:
+   ```bash
+   curl -X POST http://localhost:8080/api/auth/register-admin \
+   -H "Content-Type: application/json" \
+   -d '{
+       "name": "Admin User",
+       "email": "admin@library.com",
+       "password": "mySecurePassword",
+       "phone": "1234567890",
+       "adminSecret": "YOUR_SECRET_KEY_FROM_PROPERTIES"
+   }'
+   ```
 
 ### 3. Frontend (React)
 The frontend is a modern React application built with Vite and React Query. 
