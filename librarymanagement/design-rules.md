@@ -43,3 +43,12 @@
 - **Desktop / Laptop (L)**: `> 992px` (2 columns for dashboard charts: `2fr 1fr`)
 - **Tablet (M)**: `576px - 992px` (Stacked single column `1fr` for charts, responsive grids)
 - **Mobile (S)**: `< 576px` (Stacked single column `1fr`, compact padding and sidebar)
+
+## 6. Security & Environment
+- **Secrets Management**: NEVER hardcode API keys, admin credentials, or any sensitive data in source code.
+- **Configuration**: Use `application.properties` (or environment variables) for secrets like `app.admin.secret-key` and external API keys (e.g., Brevo).
+- **Admin Access**: Admin accounts are created dynamically via secured endpoints (using an admin secret) rather than being seeded with hardcoded credentials.
+
+## 7. Component Guidelines
+- **Reusability**: Check `/components` for existing UI elements before creating new ones.
+- **Design Tokens**: All styling must use the variables defined above. Do not use ad-hoc hex colors or pixel sizes.

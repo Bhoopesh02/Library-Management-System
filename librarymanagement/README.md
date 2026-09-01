@@ -38,9 +38,11 @@ cd backend
 *(If on Windows and you don't have Maven installed, use `.\mvnw.cmd` instead).*
 
 The backend REST API will start on `http://localhost:8080`.
-Upon startup, a default **Admin account** will be seeded:
-* **Email:** `admin@library.com`
-* **Password:** `admin123`
+
+**Admin Account Setup:**
+For security reasons, admin accounts are no longer hardcoded. To create an admin account:
+1. Ensure `app.admin.secret-key` is configured securely in your environment or `application.properties`.
+2. Use the `/api/auth/register-admin` endpoint and provide the `adminSecret` that matches this key.
 
 ### 3. Frontend (React)
 The frontend is a modern React application built with Vite and React Query. 
@@ -59,7 +61,7 @@ npm run build
 ```
 
 ## Testing Checklist
-- [x] Login with `admin@library.com` / `admin123`.
+- [x] Register an admin via `/api/auth/register-admin` and login.
 - [x] Create a new book from the Admin Dashboard -> Manage Books.
 - [x] Create a new User via the registration page (or Admin -> Manage Users).
 - [x] Issue the created book to the user.
