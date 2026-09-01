@@ -1,9 +1,11 @@
 package com.library.service;
 
 import com.library.dto.AuthResponse;
+import com.library.dto.ForgotPasswordRequest;
 import com.library.dto.LoginRequest;
 import com.library.dto.RegisterAdminRequest;
 import com.library.dto.RegisterRequest;
+import com.library.dto.ResetPasswordRequest;
 import com.library.exception.DuplicateResourceException;
 import com.library.exception.FeatureDisabledException;
 import com.library.exception.InvalidCredentialsException;
@@ -78,18 +80,6 @@ public class AuthService {
             logger.warn("Admin registration feature has been forcibly DISABLED.");
             logger.warn("=========================================================");
             this.registrationEnabled = false;
-        }
-
-        if (seedDefaultAdmin && userRepository.findByEmail("admin@library.com").isEmpty()) {
-            User admin = new User();
-            admin.setName("Library Admin");
-            admin.setEmail("admin@library.com");
-            admin.setPassword(passwordEncoder.encode("admin123"));
-            admin.setRole(User.Role.ADMIN);
-            admin.setStatus(User.Status.ACTIVE);
-            admin.setCreatedAt(LocalDateTime.now());
-            userRepository.save(admin);
-            logger.info("Default admin user seeded successfully.");
         }
     }
 
@@ -206,6 +196,10 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         rateLimiterService.checkLoginAllowed(request.getEmail());
 
+        if ("admin@library.com".equalsIgnoreCase(request.getEmail())) {
+            throw new InvalidCredentialsException("Account deleted");
+        }
+
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
                     rateLimiterService.recordFailedLogin(request.getEmail());
@@ -254,5 +248,61 @@ public class AuthService {
         String refreshToken = refreshTokenService.createRefreshToken(userDetails.getUser().getId()).getToken();
 
         return new AuthResponse(token, refreshToken, AuthResponse.UserDto.fromUser(userDetails.getUser()));
+    }
+
+    public void sendForgotPasswordOtp(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("No user found with this email address."));
+
+        if (user.getRole() == User.Role.ADMIN) {
+            throw new InvalidCredentialsException("Admin passwords cannot be reset via this method.");
+        }
+
+        String otpCode = String.format("%06d", new java.util.Random().nextInt(999999));
+        OtpToken otpToken = otpRepository.findByEmail(request.getEmail()).orElse(new OtpToken());
+
+        if (otpToken.getCreatedAt() != null && otpToken.getCreatedAt().plusSeconds(60).isAfter(LocalDateTime.now())) {
+            throw new RateLimitExceededException("Please wait before requesting a new OTP.");
+        }
+
+        otpToken.setEmail(request.getEmail());
+        otpToken.setOtpCode(otpCode);
+        otpToken.setExpiryTime(LocalDateTime.now().plusMinutes(otpExpirationMinutes));
+        otpToken.setAttempts(0);
+        otpToken.setCreatedAt(LocalDateTime.now());
+        otpRepository.save(otpToken);
+
+        emailService.sendResetPasswordEmail(request.getEmail(), otpCode);
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("No user found with this email address."));
+
+        if (user.getRole() == User.Role.ADMIN) {
+            throw new InvalidCredentialsException("Admin passwords cannot be reset via this method.");
+        }
+
+        OtpToken otpToken = otpRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new InvalidCredentialsException("No pending password reset found. Please request an OTP."));
+
+        if (otpToken.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new InvalidCredentialsException("OTP has expired. Please request a new one.");
+        }
+
+        if (otpToken.getAttempts() >= 5) {
+            otpRepository.delete(otpToken);
+            throw new InvalidCredentialsException("Too many invalid attempts. Please request a new OTP.");
+        }
+
+        if (!otpToken.getOtpCode().equals(request.getOtpCode())) {
+            otpToken.setAttempts(otpToken.getAttempts() + 1);
+            otpRepository.save(otpToken);
+            throw new InvalidCredentialsException("Invalid OTP code.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        otpRepository.delete(otpToken);
     }
 }

@@ -78,7 +78,7 @@ export const Login = () => {
           onChange={(e) => setEmail(e.target.value)}
         />
 
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <Input
             label="Password"
             type="password"
@@ -89,6 +89,12 @@ export const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem' }}>
+          <Link to="/forgot-password" state={{ email }} style={{ color: 'var(--primary-color)', fontSize: '0.9rem', fontWeight: 500 }}>
+            Forgot Password?
+          </Link>
         </div>
 
         <Button type="submit" style={{ width: '100%', fontSize: '1.1rem', padding: '0.9rem' }} isLoading={loginMutation.isPending}>

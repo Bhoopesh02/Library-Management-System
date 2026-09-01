@@ -6,6 +6,8 @@ import com.library.dto.LoginRequest;
 import com.library.dto.RegisterAdminRequest;
 import com.library.dto.RegisterRequest;
 import com.library.dto.SendOtpRequest;
+import com.library.dto.ForgotPasswordRequest;
+import com.library.dto.ResetPasswordRequest;
 import com.library.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -28,6 +30,18 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
         authService.sendRegistrationOtp(request);
         return ResponseEntity.ok(ApiResponse.success("OTP sent to email successfully", null));
+    }
+
+    @PostMapping("/forgot-password-otp")
+    public ResponseEntity<ApiResponse<Void>> forgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.sendForgotPasswordOtp(request);
+        return ResponseEntity.ok(ApiResponse.success("Password reset OTP sent to email successfully", null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully", null));
     }
 
     @PostMapping("/register-admin")

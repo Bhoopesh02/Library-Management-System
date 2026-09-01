@@ -5,6 +5,7 @@ import { Login } from './pages/auth/Login';
 import { AdminLogin } from './pages/auth/AdminLogin';
 import { AdminRegister } from './pages/auth/AdminRegister';
 import { Register } from './pages/auth/Register';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { UserDashboard } from './pages/dashboard/UserDashboard';
 import { AdminDashboard } from './pages/dashboard/AdminDashboard';
 import { ManageBooks } from './pages/admin/ManageBooks';
@@ -36,6 +37,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/admin-login" element={<AdminLogin />} />
       <Route path="/admin-register" element={<AdminRegister />} />
       <Route path="/register" element={<Register />} />
