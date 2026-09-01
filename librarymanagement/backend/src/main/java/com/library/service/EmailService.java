@@ -3,6 +3,7 @@ package com.library.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,9 @@ public class EmailService {
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
+
+    @Value("${app.mail.from:}")
+    private String fromEmail;
 
     public void sendOtpEmail(String to, String otpCode) {
         String subject = "Your Registration Verification Code";
@@ -46,6 +50,9 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             
+            if (fromEmail != null && !fromEmail.isEmpty()) {
+                helper.setFrom(fromEmail, "Library Management System");
+            }
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
