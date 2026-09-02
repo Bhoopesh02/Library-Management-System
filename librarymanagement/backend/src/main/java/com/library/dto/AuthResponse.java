@@ -27,14 +27,16 @@ public class AuthResponse {
         private String name;
         private String email;
         private String role;
+        private boolean masterAdmin;
 
         public UserDto() {}
 
-        public UserDto(String id, String name, String email, String role) {
+        public UserDto(String id, String name, String email, String role, boolean masterAdmin) {
             this.id = id;
             this.name = name;
             this.email = email;
             this.role = role;
+            this.masterAdmin = masterAdmin;
         }
 
         public String getId() { return id; }
@@ -45,13 +47,16 @@ public class AuthResponse {
         public void setEmail(String email) { this.email = email; }
         public String getRole() { return role; }
         public void setRole(String role) { this.role = role; }
+        public boolean isMasterAdmin() { return masterAdmin; }
+        public void setMasterAdmin(boolean masterAdmin) { this.masterAdmin = masterAdmin; }
 
         public static UserDto fromUser(User user) {
             return new UserDto(
                     user.getId(),
                     user.getName(),
                     user.getEmail(),
-                    user.getRole().name()
+                    user.getRole().name(),
+                    user.isMasterAdmin()
             );
         }
     }

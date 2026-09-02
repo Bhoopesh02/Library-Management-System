@@ -17,6 +17,7 @@ public class User {
     private String phone;
     private Role role;
     private Status status;
+    private boolean masterAdmin = false;
     private LocalDateTime createdAt;
 
     public User() {}
@@ -35,6 +36,8 @@ public class User {
     public void setRole(Role role) { this.role = role; }
     public Status getStatus() { return status; }
     public void setStatus(Status status) { this.status = status; }
+    public boolean isMasterAdmin() { return masterAdmin; }
+    public void setMasterAdmin(boolean masterAdmin) { this.masterAdmin = masterAdmin; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 

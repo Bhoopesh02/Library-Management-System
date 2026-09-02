@@ -1,0 +1,195 @@
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: var(--bg-color, #F4F7F6);
+  border-radius: 14px;
+  border: 1px solid var(--border-color, #E0E0E0);
+  margin-bottom: 1.5rem;
+}
+
+.avatarLarge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary-color, #00B4A8);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 180, 168, 0.35);
+}
+
+.crownIcon {
+  color: #FFD700;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.profileInfo {
+  flex-grow: 1;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.nameRow h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main, #333333);
+}
+
+.emailText {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted, #777777);
+}
+
+.masterBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #333333;
+  font-weight: 700;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.successBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(76, 175, 80, 0.12);
+  border: 1px solid var(--success-color, #4CAF50);
+  border-radius: 12px;
+  color: var(--success-color, #4CAF50);
+  margin-bottom: 1.25rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.successBanner strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
+}
+
+.successBanner p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-main, #333333);
+}
+
+.masterActiveBox {
+  padding: 1.25rem;
+  background: rgba(255, 215, 0, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.4);
+  border-radius: 14px;
+}
+
+.activeHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.activeShield {
+  color: #FFA500;
+}
+
+.activeHeader h5 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main, #333333);
+}
+
+.activeDesc {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: var(--text-muted, #777777);
+  line-height: 1.4;
+}
+
+.privilegeList {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+  color: var(--text-main, #333333);
+  line-height: 1.6;
+}
+
+.elevationBox {
+  padding: 1.25rem;
+  background: var(--bg-color, #F4F7F6);
+  border-radius: 14px;
+  border: 1px solid var(--border-color, #E0E0E0);
+}
+
+.elevationHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.lockIcon {
+  color: var(--primary-color, #00B4A8);
+}
+
+.elevationHeader h5 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main, #333333);
+}
+
+.elevationDesc {
+  margin: 0 0 1.25rem 0;
+  font-size: 0.875rem;
+  color: var(--text-muted, #777777);
+  line-height: 1.4;
+}
+
+.inputGroup {
+  margin-bottom: 1rem;
+}
+
+.inputLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main, #333333);
+  margin-bottom: 0.4rem;
+}
+
+.errorAlert {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 76, 76, 0.1);
+  border: 1px solid var(--danger-color, #FF4C4C);
+  color: var(--danger-color, #FF4C4C);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

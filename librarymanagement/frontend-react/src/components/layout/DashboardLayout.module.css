@@ -23,6 +23,58 @@
   flex-shrink: 0;
 }
 
+.avatarBtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background-color: var(--primary-color, #00B4A8);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 180, 168, 0.3);
+  border: 2px solid transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.avatarBtn:hover {
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 4px 14px rgba(0, 180, 168, 0.45);
+}
+
+.avatarBtn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.avatarMaster {
+  background: linear-gradient(135deg, #00B4A8 0%, #008F85 100%);
+  border-color: #FFD700;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.4), 0 4px 12px rgba(255, 165, 0, 0.3);
+}
+
+.avatarMaster:hover {
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.6), 0 6px 18px rgba(255, 165, 0, 0.45);
+}
+
+.crownBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  color: #333333;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
 @media (max-width: 768px) {
   .mainContent {
     padding: 1.25rem 1rem;

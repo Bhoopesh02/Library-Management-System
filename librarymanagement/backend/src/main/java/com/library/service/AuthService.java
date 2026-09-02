@@ -63,6 +63,9 @@ public class AuthService {
     @Value("${app.admin.secret-key:}")
     private String adminSecretKey;
 
+    @Value("${app.admin.master-key:}")
+    private String adminMasterKey;
+
     @Value("${app.admin.registration-enabled:true}")
     private boolean registrationEnabled;
 
@@ -304,5 +307,44 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
         otpRepository.delete(otpToken);
+    }
+
+    public AuthResponse elevateToMasterAdmin(String email, String masterKey) {
+        if (adminMasterKey == null || adminMasterKey.trim().isEmpty()) {
+            logger.warn("Master admin elevation attempt failed: ADMIN_MASTER_KEY is not configured.");
+            throw new FeatureDisabledException("Admin master key is not configured on the server.");
+        }
+
+        if (masterKey == null || masterKey.trim().isEmpty()) {
+            throw new InvalidCredentialsException("Master key is required.");
+        }
+
+        boolean keyMatches = MessageDigest.isEqual(
+                masterKey.getBytes(StandardCharsets.UTF_8),
+                adminMasterKey.getBytes(StandardCharsets.UTF_8)
+        );
+
+        if (!keyMatches) {
+            logger.warn("Failed master admin elevation attempt (invalid master key) for user: {}", email);
+            throw new InvalidCredentialsException("Invalid admin master key.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidCredentialsException("User not found."));
+
+        if (user.getRole() != User.Role.ADMIN) {
+            throw new FeatureDisabledException("Only existing administrators can be elevated to Master Admin.");
+        }
+
+        user.setMasterAdmin(true);
+        userRepository.save(user);
+
+        logger.info("Admin user '{}' successfully elevated to Master Admin", email);
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(user);
+        String token = jwtUtil.generateToken(userDetails);
+        String refreshToken = refreshTokenService.createRefreshToken(user.getId()).getToken();
+
+        return new AuthResponse(token, refreshToken, AuthResponse.UserDto.fromUser(user));
     }
 }

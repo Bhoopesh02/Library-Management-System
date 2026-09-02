@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { BookOpen, Home, Search, Book, Users, ArrowRightLeft, CreditCard, LogOut, User as UserIcon } from 'lucide-react';
+import { BookOpen, Home, Search, Book, Users, ArrowRightLeft, CreditCard, LogOut, User as UserIcon, Crown } from 'lucide-react';
 import styles from './DashboardLayout.module.css';
 import { useAuth } from '../../context/AuthContext';
 import { Sidebar } from './Sidebar';
+import { MasterAccessModal } from '../features/MasterAccessModal';
+
 export const DashboardLayout = ({ title, subtitle, children }) => {
   const { user, logout } = useAuth();
+  const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
   const isAdmin = user?.role === 'ADMIN';
+  const isMasterAdmin = Boolean(user?.masterAdmin);
 
   const userLinks = [
     { id: 'dashboard', to: '/dashboard', icon: Home, text: 'Dashboard' },
@@ -36,18 +40,40 @@ export const DashboardLayout = ({ title, subtitle, children }) => {
             {subtitle && <p style={{ color: 'var(--text-muted)' }}>{subtitle}</p>}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{
-              width: '40px', height: '40px', borderRadius: '50%', 
-              backgroundColor: 'var(--primary-color)', color: 'white', 
-              display: 'flex', alignItems: 'center', justifyContent: 'center', 
-              boxShadow: '0 2px 8px rgba(0,180,168,0.3)'
-            }}>
+            <button 
+              type="button"
+              className={`${styles.avatarBtn} ${isMasterAdmin ? styles.avatarMaster : ''}`}
+              onClick={() => {
+                if (isAdmin) {
+                  setIsMasterModalOpen(true);
+                }
+              }}
+              title={
+                isAdmin 
+                  ? (isMasterAdmin ? "Master Administrator (Click for Details)" : "Admin Profile (Click to enter Master Key)") 
+                  : `Signed in as ${user?.name || 'Member'}`
+              }
+            >
               <UserIcon size={20} />
-            </div>
+              {isMasterAdmin && (
+                <span className={styles.crownBadge} title="Master Admin Active">
+                  <Crown size={11} />
+                </span>
+              )}
+            </button>
           </div>
         </header>
+
         {children}
+
+        {isAdmin && (
+          <MasterAccessModal
+            isOpen={isMasterModalOpen}
+            onClose={() => setIsMasterModalOpen(false)}
+          />
+        )}
       </main>
     </div>
   );
 };
+

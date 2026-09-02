@@ -164,9 +164,15 @@ export const ManageUsers = () => {
                   <td>{u.email}</td>
                   <td>
                     {u.role === 'ADMIN' ? (
-                      <Badge style={{ backgroundColor: 'rgba(114, 9, 183, 0.12)', color: '#7209b7' }}>
-                        <ShieldAlert size={14} /> Admin
-                      </Badge>
+                      u.masterAdmin ? (
+                        <Badge style={{ background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: '#333333', fontWeight: 700 }}>
+                          <Crown size={13} /> Master Admin
+                        </Badge>
+                      ) : (
+                        <Badge style={{ backgroundColor: 'rgba(114, 9, 183, 0.12)', color: '#7209b7' }}>
+                          <ShieldAlert size={14} /> Admin
+                        </Badge>
+                      )
                     ) : (
                       <Badge style={{ backgroundColor: 'rgba(0, 180, 168, 0.12)', color: 'var(--primary-color)' }}>
                         <User size={14} /> Member

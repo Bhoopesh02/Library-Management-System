@@ -24,6 +24,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateUser = (updatedUserData, newAuthToken, newRefreshToken) => {
+    setUser(updatedUserData);
+    localStorage.setItem('user', JSON.stringify(updatedUserData));
+    if (newAuthToken) {
+      setToken(newAuthToken);
+      localStorage.setItem('token', newAuthToken);
+    }
+    if (newRefreshToken) {
+      setRefreshToken(newRefreshToken);
+      localStorage.setItem('refreshToken', newRefreshToken);
+    }
+  };
+
   const logout = async () => {
     try {
       if (token) {
@@ -77,7 +90,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, refreshToken, login, logout, isAuthenticated: !!token }}>
+    <AuthContext.Provider value={{ user, token, refreshToken, login, updateUser, logout, isAuthenticated: !!token }}>
       {children}
     </AuthContext.Provider>
   );
