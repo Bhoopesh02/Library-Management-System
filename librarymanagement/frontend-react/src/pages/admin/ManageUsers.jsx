@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, ShieldAlert, User, CheckCircle, Ban, Users as UsersIcon } from 'lucide-react';
+import { Search, ShieldAlert, User, CheckCircle, Ban, Users as UsersIcon, Trash2, KeyRound, AlertTriangle } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -8,6 +8,7 @@ import { Button } from '../../components/ui/Button';
 import { Table } from '../../components/ui/Table';
 import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { Modal } from '../../components/ui/Modal';
 import { fetchApi } from '../../utils/api';
 
 export const ManageUsers = () => {
@@ -15,6 +16,12 @@ export const ManageUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   
+  // Delete modal state
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [masterKey, setMasterKey] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
@@ -35,10 +42,52 @@ export const ManageUsers = () => {
     }
   });
 
+  const deleteAccountMutation = useMutation({
+    mutationFn: ({ userId, masterKey }) => fetchApi(`/users/${userId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ masterKey })
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['adminDashboardStats'] });
+      setSuccessMessage(`Account for ${userToDelete?.name || 'user'} successfully deleted.`);
+      handleCloseDeleteModal();
+      setTimeout(() => setSuccessMessage(''), 5000);
+    },
+    onError: (err) => {
+      setDeleteError(err.message || 'Failed to delete account. Please verify the Admin Master Key.');
+    }
+  });
+
   const handleSearch = (e) => {
     e.preventDefault();
     setSearchTerm(searchInput);
     setPage(0);
+  };
+
+  const handleOpenDeleteModal = (user) => {
+    setUserToDelete(user);
+    setMasterKey('');
+    setDeleteError('');
+  };
+
+  const handleCloseDeleteModal = () => {
+    setUserToDelete(null);
+    setMasterKey('');
+    setDeleteError('');
+  };
+
+  const handleConfirmDelete = (e) => {
+    e.preventDefault();
+    if (!masterKey.trim()) {
+      setDeleteError('Please enter the Admin Master Key to proceed.');
+      return;
+    }
+    setDeleteError('');
+    deleteAccountMutation.mutate({
+      userId: userToDelete.id,
+      masterKey: masterKey.trim()
+    });
   };
 
   const users = data?.data?.content || [];
@@ -49,6 +98,24 @@ export const ManageUsers = () => {
       title="Manage Users" 
       subtitle="View registered patrons, administrators, and manage account statuses"
     >
+      {successMessage && (
+        <div style={{
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          border: '1px solid var(--success-color, #4CAF50)',
+          color: 'var(--success-color, #4CAF50)',
+          padding: '0.85rem 1.25rem',
+          borderRadius: '12px',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          fontWeight: 500
+        }}>
+          <CheckCircle size={18} />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
       <Card>
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'flex-end' }}>
           <div style={{ flexGrow: 1 }}>
@@ -106,7 +173,7 @@ export const ManageUsers = () => {
                       </Badge>
                     )}
                   </td>
-                  <td>{u.phoneNumber || '-'}</td>
+                  <td>{u.phone || u.phoneNumber || '-'}</td>
                   <td>
                     {u.status === 'ACTIVE' ? (
                       <Badge variant="success"><CheckCircle size={14} /> Active</Badge>
@@ -115,18 +182,27 @@ export const ManageUsers = () => {
                     )}
                   </td>
                   <td>
-                    {u.role === 'ADMIN' ? (
-                      <span className="text-muted" style={{ fontSize: '0.85rem' }}><ShieldAlert size={14} /> Protected</span>
-                    ) : (
-                      <Button 
-                        variant={u.status === 'ACTIVE' ? 'danger' : 'primary'} 
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      {u.role !== 'ADMIN' && (
+                        <Button 
+                          variant={u.status === 'ACTIVE' ? 'secondary' : 'primary'} 
+                          size="sm"
+                          onClick={() => toggleStatusMutation.mutate({ userId: u.id, status: u.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' })}
+                          isLoading={toggleStatusMutation.isPending && toggleStatusMutation.variables?.userId === u.id}
+                        >
+                          {u.status === 'ACTIVE' ? <><Ban size={14} /> Suspend</> : <><CheckCircle size={14} /> Activate</>}
+                        </Button>
+                      )}
+                      <Button
+                        variant="danger"
                         size="sm"
-                        onClick={() => toggleStatusMutation.mutate({ userId: u.id, status: u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE' })}
-                        isLoading={toggleStatusMutation.isPending && toggleStatusMutation.variables?.userId === u.id}
+                        onClick={() => handleOpenDeleteModal(u)}
+                        title={u.role === 'ADMIN' ? "Delete Admin Account (Requires Master Key)" : "Delete User Account (Requires Master Key)"}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       >
-                        {u.status === 'ACTIVE' ? <><Ban size={14} /> Suspend</> : <><CheckCircle size={14} /> Activate</>}
+                        <Trash2 size={14} /> Delete
                       </Button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))
@@ -144,6 +220,100 @@ export const ManageUsers = () => {
           </Button>
         </div>
       </Card>
+
+      {/* Delete Account Modal */}
+      <Modal
+        isOpen={Boolean(userToDelete)}
+        onClose={handleCloseDeleteModal}
+        title={userToDelete?.role === 'ADMIN' ? "Delete Administrator Account" : "Delete Member Account"}
+        size="md"
+        footer={
+          <>
+            <Button variant="secondary" onClick={handleCloseDeleteModal} disabled={deleteAccountMutation.isPending}>
+              Cancel
+            </Button>
+            <Button 
+              variant="danger" 
+              onClick={handleConfirmDelete} 
+              isLoading={deleteAccountMutation.isPending}
+            >
+              <Trash2 size={16} /> Confirm Deletion
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleConfirmDelete}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '1rem',
+            padding: '1rem',
+            backgroundColor: 'rgba(255, 76, 76, 0.08)',
+            border: '1px solid rgba(255, 76, 76, 0.25)',
+            borderRadius: '12px',
+            marginBottom: '1.25rem'
+          }}>
+            <AlertTriangle size={24} style={{ color: 'var(--danger-color, #FF4C4C)', flexShrink: 0, marginTop: '2px' }} />
+            <div style={{ fontSize: '0.9rem', color: 'var(--text-main, #333333)', lineHeight: 1.4 }}>
+              <strong>Permanent Action:</strong> You are about to permanently delete{' '}
+              <strong>{userToDelete?.name}</strong> ({userToDelete?.email}).
+              {userToDelete?.role === 'ADMIN' ? (
+                <div style={{ marginTop: '0.4rem', color: '#7209b7', fontWeight: 500 }}>
+                  This is an Administrator account. All administrative privileges for this account will be permanently revoked.
+                </div>
+              ) : (
+                <div style={{ marginTop: '0.4rem', color: 'var(--text-muted, #777777)' }}>
+                  This action will invalidate all active sessions and delete member records.
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px', 
+              fontSize: '0.9rem', 
+              fontWeight: 600, 
+              color: 'var(--text-main, #333333)', 
+              marginBottom: '0.5rem' 
+            }}>
+              <KeyRound size={16} style={{ color: 'var(--primary-color, #00B4A8)' }} />
+              Admin Master Key
+            </label>
+            <Input
+              type="password"
+              placeholder="Enter Admin Master Key..."
+              value={masterKey}
+              onChange={(e) => {
+                setMasterKey(e.target.value);
+                if (deleteError) setDeleteError('');
+              }}
+              autoFocus
+              required
+            />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #777777)' }}>
+              A valid master key configured in server environment variables is required for account deletion.
+            </span>
+          </div>
+
+          {deleteError && (
+            <div style={{
+              backgroundColor: 'rgba(255, 76, 76, 0.1)',
+              border: '1px solid var(--danger-color, #FF4C4C)',
+              color: 'var(--danger-color, #FF4C4C)',
+              padding: '0.75rem 1rem',
+              borderRadius: '8px',
+              fontSize: '0.875rem',
+              marginBottom: '1rem',
+              fontWeight: 500
+            }}>
+              {deleteError}
+            </div>
+          )}
+        </form>
+      </Modal>
     </DashboardLayout>
   );
 };

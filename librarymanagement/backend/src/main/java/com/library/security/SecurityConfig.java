@@ -44,10 +44,12 @@ public class SecurityConfig {
                     .maxAgeInSeconds(31536000)
                 )
                 .frameOptions(frameOptions -> frameOptions.deny())
-                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'"))
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'"))
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                // Allow Swagger UI and API docs
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Allow public access to uploaded files (like book covers)
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/books/*/coverImage").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll() // Keeping just in case for older data or other static assets
