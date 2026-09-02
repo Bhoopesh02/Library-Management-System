@@ -69,24 +69,11 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUserAccount(String id, String masterKey, String currentAdminEmail) {
-        if (adminMasterKey == null || adminMasterKey.trim().isEmpty()) {
-            logger.warn("Admin account deletion attempt failed: ADMIN_MASTER_KEY is not configured.");
-            throw new FeatureDisabledException("Admin master key is not configured on the server.");
-        }
-
-        if (masterKey == null || masterKey.trim().isEmpty()) {
-            throw new InvalidCredentialsException("Admin master key is required.");
-        }
-
-        boolean keyMatches = MessageDigest.isEqual(
-                masterKey.getBytes(StandardCharsets.UTF_8),
-                adminMasterKey.getBytes(StandardCharsets.UTF_8)
-        );
-
-        if (!keyMatches) {
-            logger.warn("Unauthorized account deletion attempt with invalid master key by admin: {}", currentAdminEmail);
-            throw new InvalidCredentialsException("Invalid admin master key.");
+    public void deleteUserAccount(String id, String currentAdminEmail) {
+        User currentAdmin = userRepository.findByEmail(currentAdminEmail)
+                .orElseThrow(() -> new RuntimeException("Current admin not found"));
+        if (!currentAdmin.isMasterAdmin()) {
+            throw new RuntimeException("Only Master Admins are authorized to delete accounts.");
         }
 
         User user = getUserById(id);

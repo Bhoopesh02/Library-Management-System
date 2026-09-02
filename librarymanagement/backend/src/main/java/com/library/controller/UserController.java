@@ -44,9 +44,8 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @PathVariable String id,
-            @Valid @RequestBody DeleteAccountRequest request,
             Authentication authentication) {
-        userService.deleteUserAccount(id, request.getMasterKey(), authentication.getName());
+        userService.deleteUserAccount(id, authentication.getName());
         return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
     }
 }

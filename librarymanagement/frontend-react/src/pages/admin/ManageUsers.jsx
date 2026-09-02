@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, ShieldAlert, User, CheckCircle, Ban, Users as UsersIcon, Trash2, KeyRound, AlertTriangle } from 'lucide-react';
+import { Search, ShieldAlert, User, CheckCircle, Ban, Users as UsersIcon, Trash2, KeyRound, AlertTriangle, Crown } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
@@ -10,15 +10,16 @@ import { Badge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Modal } from '../../components/ui/Modal';
 import { fetchApi } from '../../utils/api';
+import { useAuth } from '../../context/AuthContext';
 
 export const ManageUsers = () => {
+  const { user } = useAuth();
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   
   // Delete modal state
   const [userToDelete, setUserToDelete] = useState(null);
-  const [masterKey, setMasterKey] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -43,9 +44,8 @@ export const ManageUsers = () => {
   });
 
   const deleteAccountMutation = useMutation({
-    mutationFn: ({ userId, masterKey }) => fetchApi(`/users/${userId}`, {
-      method: 'DELETE',
-      body: JSON.stringify({ masterKey })
+    mutationFn: ({ userId }) => fetchApi(`/users/${userId}`, {
+      method: 'DELETE'
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -55,7 +55,7 @@ export const ManageUsers = () => {
       setTimeout(() => setSuccessMessage(''), 5000);
     },
     onError: (err) => {
-      setDeleteError(err.message || 'Failed to delete account. Please verify the Admin Master Key.');
+      setDeleteError(err.message || 'Failed to delete account.');
     }
   });
 
@@ -67,26 +67,19 @@ export const ManageUsers = () => {
 
   const handleOpenDeleteModal = (user) => {
     setUserToDelete(user);
-    setMasterKey('');
     setDeleteError('');
   };
 
   const handleCloseDeleteModal = () => {
     setUserToDelete(null);
-    setMasterKey('');
     setDeleteError('');
   };
 
   const handleConfirmDelete = (e) => {
     e.preventDefault();
-    if (!masterKey.trim()) {
-      setDeleteError('Please enter the Admin Master Key to proceed.');
-      return;
-    }
     setDeleteError('');
     deleteAccountMutation.mutate({
-      userId: userToDelete.id,
-      masterKey: masterKey.trim()
+      userId: userToDelete.id
     });
   };
 
@@ -199,15 +192,17 @@ export const ManageUsers = () => {
                           {u.status === 'ACTIVE' ? <><Ban size={14} /> Suspend</> : <><CheckCircle size={14} /> Activate</>}
                         </Button>
                       )}
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => handleOpenDeleteModal(u)}
-                        title={u.role === 'ADMIN' ? "Delete Admin Account (Requires Master Key)" : "Delete User Account (Requires Master Key)"}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Trash2 size={14} /> Delete
-                      </Button>
+                      {user?.masterAdmin && (
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={() => handleOpenDeleteModal(u)}
+                          title={u.role === 'ADMIN' ? "Delete Admin Account (Requires Master Key)" : "Delete User Account (Requires Master Key)"}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Trash2 size={14} /> Delete
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -273,35 +268,6 @@ export const ManageUsers = () => {
                 </div>
               )}
             </div>
-          </div>
-
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '6px', 
-              fontSize: '0.9rem', 
-              fontWeight: 600, 
-              color: 'var(--text-main, #333333)', 
-              marginBottom: '0.5rem' 
-            }}>
-              <KeyRound size={16} style={{ color: 'var(--primary-color, #00B4A8)' }} />
-              Admin Master Key
-            </label>
-            <Input
-              type="password"
-              placeholder="Enter Admin Master Key..."
-              value={masterKey}
-              onChange={(e) => {
-                setMasterKey(e.target.value);
-                if (deleteError) setDeleteError('');
-              }}
-              autoFocus
-              required
-            />
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted, #777777)' }}>
-              A valid master key configured in server environment variables is required for account deletion.
-            </span>
           </div>
 
           {deleteError && (
