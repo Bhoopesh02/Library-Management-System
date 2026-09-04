@@ -26,14 +26,43 @@ public class AuthController {
     @Value("${app.admin.trust-proxy-headers:false}")
     private boolean trustProxyHeaders;
 
+    @Autowired
+    private com.library.security.RateLimiterService rateLimiterService;
+
     @PostMapping("/send-otp")
-    public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody SendOtpRequest request) {
+    public ResponseEntity<ApiResponse<Void>> sendOtp(@Valid @RequestBody SendOtpRequest request, HttpServletRequest httpRequest) {
+        String clientIp = httpRequest.getRemoteAddr();
+        
+        if (trustProxyHeaders) {
+            String xForwardedFor = httpRequest.getHeader("X-Forwarded-For");
+            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+                clientIp = xForwardedFor.split(",")[0].trim();
+            }
+        }
+        
+        if (!rateLimiterService.tryConsumeOtp(clientIp)) {
+            throw new com.library.exception.RateLimitExceededException("Too many OTP requests from this IP. Please try again later.");
+        }
+
         authService.sendRegistrationOtp(request);
         return ResponseEntity.ok(ApiResponse.success("OTP sent to email successfully", null));
     }
 
     @PostMapping("/forgot-password-otp")
-    public ResponseEntity<ApiResponse<Void>> forgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Void>> forgotPasswordOtp(@Valid @RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+        String clientIp = httpRequest.getRemoteAddr();
+        
+        if (trustProxyHeaders) {
+            String xForwardedFor = httpRequest.getHeader("X-Forwarded-For");
+            if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+                clientIp = xForwardedFor.split(",")[0].trim();
+            }
+        }
+        
+        if (!rateLimiterService.tryConsumeOtp(clientIp)) {
+            throw new com.library.exception.RateLimitExceededException("Too many OTP requests from this IP. Please try again later.");
+        }
+
         authService.sendForgotPasswordOtp(request);
         return ResponseEntity.ok(ApiResponse.success("Password reset OTP sent to email successfully", null));
     }

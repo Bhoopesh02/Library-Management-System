@@ -88,17 +88,23 @@ public class AuthService {
 
     public void sendRegistrationOtp(SendOtpRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new DuplicateResourceException("Email is already registered!");
+            // Return silently to prevent email enumeration
+            return;
         }
 
-        // Generate 6-digit OTP
-        String otpCode = String.format("%06d", new java.util.Random().nextInt(999999));
+        // Generate 6-digit OTP securely
+        String otpCode = String.format("%06d", new java.security.SecureRandom().nextInt(1000000));
 
         OtpToken otpToken = otpRepository.findByEmail(request.getEmail()).orElse(new OtpToken());
         
         // Simple rate limiting (60 seconds cooldown)
         if (otpToken.getCreatedAt() != null && otpToken.getCreatedAt().plusSeconds(60).isAfter(LocalDateTime.now())) {
             throw new RateLimitExceededException("Please wait before requesting a new OTP.");
+        }
+        
+        // Daily rate limiting (max 5 per 24 hours per email)
+        if (!rateLimiterService.tryConsumeDailyEmailOtp(request.getEmail())) {
+            throw new RateLimitExceededException("Daily OTP limit reached for this email. Please try again tomorrow.");
         }
 
         otpToken.setEmail(request.getEmail());
@@ -129,7 +135,12 @@ public class AuthService {
             throw new InvalidCredentialsException("Too many invalid attempts. Please request a new OTP.");
         }
 
-        if (!otpToken.getOtpCode().equals(request.getOtpCode())) {
+        boolean otpMatches = MessageDigest.isEqual(
+                otpToken.getOtpCode().getBytes(StandardCharsets.UTF_8),
+                request.getOtpCode().getBytes(StandardCharsets.UTF_8)
+        );
+
+        if (!otpMatches) {
             otpToken.setAttempts(otpToken.getAttempts() + 1);
             otpRepository.save(otpToken);
             throw new InvalidCredentialsException("Invalid OTP code.");
@@ -205,6 +216,7 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> {
+                    logger.warn("[SECURITY] [type=FAILED_LOGIN] [email={}] - User not found", request.getEmail());
                     rateLimiterService.recordFailedLogin(request.getEmail());
                     return new InvalidCredentialsException("Invalid email or password");
                 });
@@ -212,6 +224,7 @@ public class AuthService {
         boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (!matches) {
+            logger.warn("[SECURITY] [type=FAILED_LOGIN] [email={}] - Invalid password", request.getEmail());
             rateLimiterService.recordFailedLogin(request.getEmail());
             throw new InvalidCredentialsException("Invalid email or password");
         }
@@ -254,18 +267,31 @@ public class AuthService {
     }
 
     public void sendForgotPasswordOtp(ForgotPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new InvalidCredentialsException("No user found with this email address."));
-
-        if (user.getRole() == User.Role.ADMIN) {
-            throw new InvalidCredentialsException("Admin passwords cannot be reset via this method.");
+        java.util.Optional<User> userOpt = userRepository.findByEmail(request.getEmail());
+        if (!userOpt.isPresent()) {
+            logger.info("[SECURITY] [type=PASSWORD_RESET_INITIATED] [email={}] - Request ignored (User not found)", request.getEmail());
+            // Silent return to prevent email enumeration
+            return;
         }
 
-        String otpCode = String.format("%06d", new java.util.Random().nextInt(999999));
+        User user = userOpt.get();
+        if (user.getRole() == User.Role.ADMIN) {
+            logger.warn("[SECURITY] [type=PASSWORD_RESET_INITIATED] [email={}] - Request ignored (Admin accounts disallowed)", request.getEmail());
+            // Admin passwords cannot be reset via this method. Silent return.
+            return;
+        }
+        logger.info("[SECURITY] [type=PASSWORD_RESET_INITIATED] [email={}] - OTP generated and sent", request.getEmail());
+
+        String otpCode = String.format("%06d", new java.security.SecureRandom().nextInt(1000000));
         OtpToken otpToken = otpRepository.findByEmail(request.getEmail()).orElse(new OtpToken());
 
         if (otpToken.getCreatedAt() != null && otpToken.getCreatedAt().plusSeconds(60).isAfter(LocalDateTime.now())) {
             throw new RateLimitExceededException("Please wait before requesting a new OTP.");
+        }
+        
+        // Daily rate limiting (max 5 per 24 hours per email)
+        if (!rateLimiterService.tryConsumeDailyEmailOtp(request.getEmail())) {
+            throw new RateLimitExceededException("Daily OTP limit reached for this email. Please try again tomorrow.");
         }
 
         otpToken.setEmail(request.getEmail());
@@ -310,6 +336,9 @@ public class AuthService {
     }
 
     public AuthResponse elevateToMasterAdmin(String email, String masterKey) {
+        String rateLimitKey = "master_key:" + email;
+        rateLimiterService.checkLoginAllowed(rateLimitKey);
+
         if (adminMasterKey == null || adminMasterKey.trim().isEmpty()) {
             logger.warn("Master admin elevation attempt failed: ADMIN_MASTER_KEY is not configured.");
             throw new FeatureDisabledException("Admin master key is not configured on the server.");
@@ -326,6 +355,7 @@ public class AuthService {
 
         if (!keyMatches) {
             logger.warn("Failed master admin elevation attempt (invalid master key) for user: {}", email);
+            rateLimiterService.recordFailedLogin(rateLimitKey);
             throw new InvalidCredentialsException("Invalid admin master key.");
         }
 
@@ -339,6 +369,7 @@ public class AuthService {
         user.setMasterAdmin(true);
         userRepository.save(user);
 
+        rateLimiterService.resetLoginAttempts(rateLimitKey);
         logger.info("Admin user '{}' successfully elevated to Master Admin", email);
 
         UserDetailsImpl userDetails = new UserDetailsImpl(user);

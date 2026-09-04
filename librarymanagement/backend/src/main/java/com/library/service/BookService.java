@@ -24,6 +24,13 @@ public class BookService {
         boolean hasSearch = search != null && !search.trim().isEmpty();
         boolean hasCategory = category != null && !category.trim().isEmpty();
 
+        if (hasSearch) {
+            if (search.length() > 100) {
+                throw new IllegalArgumentException("Search query cannot exceed 100 characters");
+            }
+            search = java.util.regex.Pattern.quote(search);
+        }
+
         if (hasSearch && hasCategory) {
             return bookRepository.searchBooksByCategory(category, search, pageable);
         } else if (hasSearch) {

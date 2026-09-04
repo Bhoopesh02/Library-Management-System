@@ -22,6 +22,7 @@ public class EmailService {
     @Value("${app.mail.from:}")
     private String fromEmail;
 
+    @org.springframework.scheduling.annotation.Async
     public void sendOtpEmail(String to, String otpCode) {
         String subject = "Your Registration Verification Code";
         String htmlContent = "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;\">"
@@ -67,6 +68,7 @@ public class EmailService {
         }
     }
 
+    @org.springframework.scheduling.annotation.Async
     public void sendResetPasswordEmail(String to, String otpCode) {
         String subject = "Password Reset Request";
         String htmlContent = "<div style=\"font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;\">"
