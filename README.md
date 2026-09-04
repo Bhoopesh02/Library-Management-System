@@ -61,11 +61,4 @@ To build for production:
 npm run build
 ```
 
-## Testing Checklist
-- [x] Login with `admin@library.com` / `admin123`.
-- [x] Create a new book from the Admin Dashboard -> Manage Books.
-- [x] Create a new User via the registration page (or Admin -> Manage Users).
-- [x] Issue the created book to the user.
-- [x] Login as the user and verify the book is in "My Books".
-- [x] Return the book from the Admin Dashboard.
-- [x] Verify Dark Mode functionality.
+
