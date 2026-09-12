@@ -42,7 +42,7 @@ export const AdminLogin = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    loginMutation.mutate({ email, password, adminPortal: true });
+    loginMutation.mutate({ email, password });
   };
 
   const leftContent = (

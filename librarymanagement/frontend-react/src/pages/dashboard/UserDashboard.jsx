@@ -17,30 +17,27 @@ export const UserDashboard = () => {
     enabled: !!user?.id
   });
 
-  const { data: finesData, isLoading: isLoadingFines, isError: isErrorFines } = useQuery({
-    queryKey: ['userFines', user?.id],
-    queryFn: () => fetchApi(`/fines/user/${user.id}`),
+  const { data: summaryData, isLoading: isLoadingSummary, isError: isErrorSummary } = useQuery({
+    queryKey: ['userFineSummary', user?.id],
+    queryFn: () => fetchApi(`/fines/summary/user/${user.id}`),
+    enabled: !!user?.id
+  });
+
+  const { data: txSummaryData, isLoading: isLoadingTxSummary, isError: isErrorTxSummary } = useQuery({
+    queryKey: ['userTransactionSummary', user?.id],
+    queryFn: () => fetchApi(`/transactions/summary/user/${user.id}`),
     enabled: !!user?.id
   });
 
   const transactions = txData?.data?.content || [];
-  const fines = finesData?.data?.content || [];
 
   const activeTransactions = transactions.filter(t => t.status === 'ISSUED' || t.status === 'OVERDUE');
-  const currentlyBorrowed = isErrorTx ? '-' : activeTransactions.length;
   
-  const today = new Date();
-  const nextWeek = new Date();
-  nextWeek.setDate(today.getDate() + 7);
-  
-  const dueSoon = isErrorTx ? '-' : activeTransactions.filter(t => {
-    const dueDate = new Date(t.dueDate);
-    return dueDate <= nextWeek && dueDate >= today;
-  }).length;
+  const txSummary = txSummaryData?.data || { currentlyBorrowed: 0, dueSoon: 0 };
+  const currentlyBorrowed = isLoadingTxSummary ? '-' : isErrorTxSummary ? '!' : txSummary.currentlyBorrowed;
+  const dueSoon = isLoadingTxSummary ? '-' : isErrorTxSummary ? '!' : txSummary.dueSoon;
 
-  const pendingAmount = isErrorFines ? '-' : fines
-    .filter(f => f.status === 'UNPAID')
-    .reduce((sum, f) => sum + f.amount, 0);
+  const pendingAmount = isErrorSummary ? '-' : (summaryData?.data?.unpaid || 0);
 
   const userName = user?.name ? user.name.split(' ')[0] : 'Reader';
 

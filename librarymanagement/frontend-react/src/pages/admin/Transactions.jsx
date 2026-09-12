@@ -14,7 +14,7 @@ export const Transactions = () => {
   const [page, setPage] = useState(0);
   // Modal state
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
-  const [issueData, setIssueData] = useState({ userId: '', bookId: '', dueDate: '' });
+  const [issueData, setIssueData] = useState({ userId: '', bookId: '' });
   const [issueError, setIssueError] = useState('');
 
   const queryClient = useQueryClient();
@@ -35,7 +35,7 @@ export const Transactions = () => {
       queryClient.invalidateQueries({ queryKey: ['adminDashboardStats'] });
       queryClient.invalidateQueries({ queryKey: ['adminBooks'] });
       setIsIssueModalOpen(false);
-      setIssueData({ userId: '', bookId: '', dueDate: '' });
+      setIssueData({ userId: '', bookId: '' });
       setIssueError('');
     },
     onError: (err) => setIssueError(err.message || 'Failed to issue book')
@@ -60,8 +60,8 @@ export const Transactions = () => {
   const totalPages = data?.data?.totalPages || 1;
 
   return (
-    <DashboardLayout 
-      title="Book Transactions" 
+    <DashboardLayout
+      title="Book Transactions"
       subtitle="Issue books to patrons and process returns smoothly"
     >
       <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
@@ -115,13 +115,13 @@ export const Transactions = () => {
                     <td>{t.returnDate ? new Date(t.returnDate).toLocaleDateString() : '-'}</td>
                     <td>
                       {isOverdue ? <Badge variant="danger"><AlertCircle size={14} /> Overdue</Badge>
-                       : isReturned ? <Badge variant="secondary"><CheckCircle size={14} /> Returned</Badge>
-                       : <Badge variant="success"><BookOpen size={14} /> Issued</Badge>}
+                        : isReturned ? <Badge variant="secondary"><CheckCircle size={14} /> Returned</Badge>
+                          : <Badge variant="success"><BookOpen size={14} /> Issued</Badge>}
                     </td>
                     <td>
                       {canReturn ? (
-                        <Button 
-                          variant="primary" 
+                        <Button
+                          variant="primary"
                           size="sm"
                           onClick={() => {
                             if (window.confirm('Confirm return of this book?')) {
@@ -162,29 +162,23 @@ export const Transactions = () => {
               <h3 style={{ margin: 0 }}>Issue Book to Patron</h3>
               <button onClick={() => setIsIssueModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}>&times;</button>
             </div>
-            
+
             {issueError && <div style={{ color: 'var(--danger-color)', marginBottom: '1rem' }}>{issueError}</div>}
-            
+
             <form onSubmit={handleIssueSubmit}>
-              <Input 
-                label="User ID *" 
-                required 
-                value={issueData.userId} 
-                onChange={e => setIssueData({...issueData, userId: e.target.value})} 
+              <Input
+                label="User ID *"
+                required
+                value={issueData.userId}
+                onChange={e => setIssueData({ ...issueData, userId: e.target.value })}
               />
-              <Input 
-                label="Book ID *" 
-                required 
-                value={issueData.bookId} 
-                onChange={e => setIssueData({...issueData, bookId: e.target.value})} 
+              <Input
+                label="Book ID *"
+                required
+                value={issueData.bookId}
+                onChange={e => setIssueData({ ...issueData, bookId: e.target.value })}
               />
-              <Input 
-                label="Due Date *" 
-                type="date"
-                required 
-                value={issueData.dueDate} 
-                onChange={e => setIssueData({...issueData, dueDate: e.target.value})} 
-              />
+
               <Button type="submit" style={{ width: '100%', marginTop: '1rem' }} isLoading={issueMutation.isPending}>
                 <CheckCircle size={18} /> Issue Book
               </Button>

@@ -33,6 +33,13 @@ public class FineController {
         return ResponseEntity.ok(ApiResponse.success("User fines retrieved", fineService.getFinesByUser(userId, page, size)));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN') or #userId == authentication.principal.user.id")
+    @GetMapping("/summary/user/{userId}")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Double>>> getUserFineSummary(
+            @PathVariable("userId") String userId) {
+        return ResponseEntity.ok(ApiResponse.success("User fine summary retrieved", fineService.getUserFineSummary(userId)));
+    }
+
     @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PostMapping("/{id}/pay")
     public ResponseEntity<ApiResponse<Fine>> payFine(@PathVariable("id") String id) {

@@ -40,6 +40,11 @@ public class TransactionService {
         if (user.getStatus() != User.Status.ACTIVE) {
             throw new RuntimeException("Cannot issue book to an inactive user");
         }
+        
+        java.util.List<Transaction.Status> activeStatuses = java.util.Arrays.asList(Transaction.Status.ISSUED, Transaction.Status.OVERDUE);
+        if (transactionRepository.existsByUserIdAndBookIdAndStatusIn(request.getUserId(), request.getBookId(), activeStatuses)) {
+            throw new RuntimeException("User already has an active issue for this book.");
+        }
 
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -48,9 +53,7 @@ public class TransactionService {
             throw new RuntimeException("Book is currently unavailable (no copies left)");
         }
 
-        if (request.getDueDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("Due date cannot be in the past");
-        }
+        // dueDate calculation is now handled by backend
 
         book.setAvailableCopies(book.getAvailableCopies() - 1);
         bookRepository.save(book);
@@ -59,7 +62,7 @@ public class TransactionService {
         transaction.setUserId(user.getId());
         transaction.setBookId(book.getId());
         transaction.setIssueDate(LocalDate.now());
-        transaction.setDueDate(request.getDueDate());
+        transaction.setDueDate(LocalDate.now().plusDays(14));
         transaction.setStatus(Transaction.Status.ISSUED);
 
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -104,6 +107,24 @@ public class TransactionService {
     public Page<Transaction> getTransactionsByUser(String userId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("issueDate").descending());
         return transactionRepository.findByUserId(userId, pageable).map(this::enrichTransaction);
+    }
+
+    public com.library.dto.TransactionSummaryResponse getUserTransactionSummary(String userId) {
+        java.util.List<Transaction> activeTransactions = new java.util.ArrayList<>();
+        activeTransactions.addAll(transactionRepository.findByUserIdAndStatus(userId, Transaction.Status.ISSUED));
+        activeTransactions.addAll(transactionRepository.findByUserIdAndStatus(userId, Transaction.Status.OVERDUE));
+
+        long currentlyBorrowed = activeTransactions.size();
+        long dueSoon = 0;
+        LocalDate today = LocalDate.now();
+        LocalDate nextWeek = today.plusDays(7);
+
+        for (Transaction t : activeTransactions) {
+            if (t.getDueDate() != null && !t.getDueDate().isBefore(today) && !t.getDueDate().isAfter(nextWeek)) {
+                dueSoon++;
+            }
+        }
+        return new com.library.dto.TransactionSummaryResponse(currentlyBorrowed, dueSoon);
     }
 
     private Transaction enrichTransaction(Transaction transaction) {

@@ -129,13 +129,26 @@ public class BookController {
             coverImageRepository.save(coverImage);
 
             String fileUrl = "/api/books/" + id + "/coverImage?side=" + side;
+            
+            BookRequest request = new BookRequest();
+            request.setTitle(book.getTitle());
+            request.setAuthor(book.getAuthor());
+            request.setIsbn(book.getIsbn());
+            request.setCategory(book.getCategory());
+            request.setPublisher(book.getPublisher());
+            request.setPublicationYear(book.getPublicationYear());
+            request.setDescription(book.getDescription());
+            request.setTotalCopies(book.getTotalCopies());
+            request.setFrontCoverUrl(book.getFrontCoverUrl());
+            request.setBackCoverUrl(book.getBackCoverUrl());
+            
             if ("front".equals(side)) {
-                book.setFrontCoverUrl(fileUrl);
+                request.setFrontCoverUrl(fileUrl);
             } else {
-                book.setBackCoverUrl(fileUrl);
+                request.setBackCoverUrl(fileUrl);
             }
 
-            Book updatedBook = bookService.saveBookDirectly(book);
+            Book updatedBook = bookService.updateBook(id, request);
             return ResponseEntity.ok(ApiResponse.success("Cover uploaded successfully", updatedBook));
             
         } catch (Exception e) {
@@ -160,13 +173,25 @@ public class BookController {
             coverImageRepository.deleteByBookIdAndSide(id, side);
 
             // Clear the URL in the database
+            BookRequest request = new BookRequest();
+            request.setTitle(book.getTitle());
+            request.setAuthor(book.getAuthor());
+            request.setIsbn(book.getIsbn());
+            request.setCategory(book.getCategory());
+            request.setPublisher(book.getPublisher());
+            request.setPublicationYear(book.getPublicationYear());
+            request.setDescription(book.getDescription());
+            request.setTotalCopies(book.getTotalCopies());
+            request.setFrontCoverUrl(book.getFrontCoverUrl());
+            request.setBackCoverUrl(book.getBackCoverUrl());
+            
             if ("front".equals(side)) {
-                book.setFrontCoverUrl(null);
+                request.setFrontCoverUrl(null);
             } else {
-                book.setBackCoverUrl(null);
+                request.setBackCoverUrl(null);
             }
 
-            Book updatedBook = bookService.saveBookDirectly(book);
+            Book updatedBook = bookService.updateBook(id, request);
             return ResponseEntity.ok(ApiResponse.success("Cover deleted successfully", updatedBook));
             
         } catch (Exception e) {

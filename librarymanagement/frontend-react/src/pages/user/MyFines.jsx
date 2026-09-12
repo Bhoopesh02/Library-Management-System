@@ -50,17 +50,17 @@ export const MyFines = () => {
     }
   };
 
+  const { data: summaryData } = useQuery({
+    queryKey: ['userFineSummary', user?.id],
+    queryFn: () => fetchApi(`/fines/summary/user/${user.id}`),
+    enabled: !!user?.id
+  });
+
   const fines = data?.data?.content || [];
   const totalPages = data?.data?.totalPages || 1;
 
-  let unpaid = 0;
-  let paid = 0;
-  
-  // Calculate totals from current page (Note: ideally backend provides total aggregations)
-  fines.forEach(fine => {
-    if (fine.status === 'UNPAID') unpaid += fine.amount;
-    else paid += fine.amount;
-  });
+  const unpaid = summaryData?.data?.unpaid || 0;
+  const paid = summaryData?.data?.paid || 0;
 
   return (
     <DashboardLayout 
@@ -74,7 +74,7 @@ export const MyFines = () => {
           </div>
           <div className={styles.statDetails}>
             <h3>₹ {unpaid}</h3>
-            <p>Unpaid Fines (This Page)</p>
+            <p>Total Unpaid Fines</p>
           </div>
         </div>
         
@@ -84,7 +84,7 @@ export const MyFines = () => {
           </div>
           <div className={styles.statDetails}>
             <h3>₹ {paid}</h3>
-            <p>Paid Fines (This Page)</p>
+            <p>Total Paid Fines</p>
           </div>
         </div>
       </div>

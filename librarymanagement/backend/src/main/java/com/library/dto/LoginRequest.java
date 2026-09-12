@@ -7,11 +7,8 @@ public class LoginRequest {
     @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
-
     @NotBlank(message = "Password is required")
     private String password;
-
-    private boolean adminPortal;
 
     public LoginRequest() {}
 
@@ -19,6 +16,4 @@ public class LoginRequest {
     public void setEmail(String email) { this.email = email; }
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
-    public boolean isAdminPortal() { return adminPortal; }
-    public void setAdminPortal(boolean adminPortal) { this.adminPortal = adminPortal; }
 }

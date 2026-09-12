@@ -48,4 +48,10 @@ public class TransactionController {
             @RequestParam(defaultValue = "10") int size) {
         return ResponseEntity.ok(ApiResponse.success("User transactions retrieved", transactionService.getTransactionsByUser(userId, page, size)));
     }
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN') or #userId == authentication.principal.user.id")
+    @GetMapping("/summary/user/{userId}")
+    public ResponseEntity<ApiResponse<com.library.dto.TransactionSummaryResponse>> getUserTransactionSummary(
+            @PathVariable("userId") String userId) {
+        return ResponseEntity.ok(ApiResponse.success("User transaction summary retrieved", transactionService.getUserTransactionSummary(userId)));
+    }
 }

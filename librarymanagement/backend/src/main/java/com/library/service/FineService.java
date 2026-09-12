@@ -59,4 +59,15 @@ public class FineService {
         
         return fineRepository.save(fine);
     }
+
+    public java.util.Map<String, Double> getUserFineSummary(String userId) {
+        java.util.List<Fine> unpaidFines = fineRepository.findByUserIdAndStatus(userId, Fine.Status.UNPAID);
+        java.util.List<Fine> paidFines = fineRepository.findByUserIdAndStatus(userId, Fine.Status.PAID);
+        double unpaidTotal = unpaidFines.stream().mapToDouble(Fine::getAmount).sum();
+        double paidTotal = paidFines.stream().mapToDouble(Fine::getAmount).sum();
+        java.util.Map<String, Double> summary = new java.util.HashMap<>();
+        summary.put("unpaid", unpaidTotal);
+        summary.put("paid", paidTotal);
+        return summary;
+    }
 }

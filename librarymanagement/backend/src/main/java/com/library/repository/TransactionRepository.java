@@ -12,4 +12,5 @@ import java.util.List;
 public interface TransactionRepository extends MongoRepository<Transaction, String> {
     Page<Transaction> findByUserId(String userId, Pageable pageable);
     List<Transaction> findByUserIdAndStatus(String userId, Transaction.Status status);
+    boolean existsByUserIdAndBookIdAndStatusIn(String userId, String bookId, List<Transaction.Status> statuses);
 }

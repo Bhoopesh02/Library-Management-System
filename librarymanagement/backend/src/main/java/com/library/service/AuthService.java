@@ -237,16 +237,6 @@ public class AuthService {
         rateLimiterService.resetLoginAttempts(request.getEmail());
 
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
-        
-        if (request.isAdminPortal()) {
-            if (userDetails.getUser().getRole() != User.Role.ADMIN && userDetails.getUser().getRole() != User.Role.MASTER_ADMIN) {
-                throw new RuntimeException("Only administrators can log in here.");
-            }
-        } else {
-            if (userDetails.getUser().getRole() == User.Role.ADMIN || userDetails.getUser().getRole() == User.Role.MASTER_ADMIN) {
-                throw new RuntimeException("Admin accounts must log in through the Administrator Portal.");
-            }
-        }
 
         String token = jwtUtil.generateToken(userDetails);
         String refreshToken = refreshTokenService.createRefreshToken(userDetails.getUser().getId()).getToken();

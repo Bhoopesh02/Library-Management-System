@@ -33,9 +33,9 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Users retrieved", userService.getAllUsers(search, page, size)));
     }
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN') or #id == authentication.principal.user.id")
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable String id) {
+    public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable("id") String id) {
         return ResponseEntity.ok(ApiResponse.success("User retrieved", userService.getUserById(id)));
     }
 

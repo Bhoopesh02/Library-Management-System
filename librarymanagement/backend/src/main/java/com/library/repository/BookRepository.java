@@ -17,4 +17,7 @@ public interface BookRepository extends MongoRepository<Book, String> {
 
     @Query("{ '$and': [ { 'category': ?0 }, { '$or': [ { 'title': { $regex: ?1, $options: 'i' } }, { 'author': { $regex: ?1, $options: 'i' } }, { 'isbn': { $regex: ?1, $options: 'i' } } ] } ] }")
     Page<Book> searchBooksByCategory(String category, String search, Pageable pageable);
+
+    boolean existsByIsbn(String isbn);
+    java.util.Optional<Book> findByIsbn(String isbn);
 }

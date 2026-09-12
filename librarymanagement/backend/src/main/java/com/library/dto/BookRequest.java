@@ -43,4 +43,12 @@ public class BookRequest {
     public void setDescription(String description) { this.description = description; }
     public Integer getTotalCopies() { return totalCopies; }
     public void setTotalCopies(Integer totalCopies) { this.totalCopies = totalCopies; }
+    
+    private String frontCoverUrl;
+    private String backCoverUrl;
+    
+    public String getFrontCoverUrl() { return frontCoverUrl; }
+    public void setFrontCoverUrl(String frontCoverUrl) { this.frontCoverUrl = frontCoverUrl; }
+    public String getBackCoverUrl() { return backCoverUrl; }
+    public void setBackCoverUrl(String backCoverUrl) { this.backCoverUrl = backCoverUrl; }
 }

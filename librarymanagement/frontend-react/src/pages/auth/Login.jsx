@@ -24,14 +24,14 @@ export const Login = () => {
       if (response.success) {
         const { accessToken, refreshToken, token, user } = response.data;
         const finalToken = accessToken || token;
-        login(user, finalToken, refreshToken);
         
         if (user.role === 'ADMIN' || user.role === 'MASTER_ADMIN') {
           setError('Admin accounts must log in through the Administrator Portal.');
           return;
-        } else {
-          navigate('/dashboard');
         }
+        
+        login(user, finalToken, refreshToken);
+        navigate('/dashboard');
       }
     },
     onError: (err) => {
@@ -42,7 +42,7 @@ export const Login = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    loginMutation.mutate({ email, password, adminPortal: false });
+    loginMutation.mutate({ email, password });
   };
 
   const leftContent = (

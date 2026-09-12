@@ -68,6 +68,7 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/books/*/coverImage").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll() // Keeping just in case for older data or other static assets
                 .requestMatchers("/api/dashboard/admin", "/api/dashboard/admin/**").hasAnyRole("ADMIN", "MASTER_ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/users/*").hasAnyRole("ADMIN", "MASTER_ADMIN", "USER")
                 .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MASTER_ADMIN") // Only admin can manage users
                 // Allow users to GET books, but only admin can modify
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/books/**").hasAnyRole("ADMIN", "MASTER_ADMIN", "USER")

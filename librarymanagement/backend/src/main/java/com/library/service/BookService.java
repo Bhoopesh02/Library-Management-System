@@ -50,6 +50,12 @@ public class BookService {
         if (!com.library.constants.BookCategory.isValid(request.getCategory())) {
             throw new RuntimeException("Invalid book category.");
         }
+        if (request.getTotalCopies() == null || request.getTotalCopies() <= 0) {
+            throw new RuntimeException("Total copies must be greater than zero.");
+        }
+        if (bookRepository.existsByIsbn(request.getIsbn())) {
+            throw new RuntimeException("A book with this ISBN already exists.");
+        }
         Book book = new Book();
         book.setTitle(request.getTitle());
         book.setAuthor(request.getAuthor());
@@ -70,6 +76,15 @@ public class BookService {
         if (!com.library.constants.BookCategory.isValid(request.getCategory())) {
             throw new RuntimeException("Invalid book category.");
         }
+        if (request.getTotalCopies() == null || request.getTotalCopies() <= 0) {
+            throw new RuntimeException("Total copies must be greater than zero.");
+        }
+        
+        java.util.Optional<Book> existingWithIsbn = bookRepository.findByIsbn(request.getIsbn());
+        if (existingWithIsbn.isPresent() && !existingWithIsbn.get().getId().equals(id)) {
+            throw new RuntimeException("A book with this ISBN already exists.");
+        }
+
         Book existingBook = getBookById(id);
         
         int diff = request.getTotalCopies() - existingBook.getTotalCopies();
@@ -88,6 +103,8 @@ public class BookService {
         existingBook.setDescription(request.getDescription());
         existingBook.setTotalCopies(request.getTotalCopies());
         existingBook.setAvailableCopies(newAvailable);
+        if (request.getFrontCoverUrl() != null) existingBook.setFrontCoverUrl(request.getFrontCoverUrl());
+        if (request.getBackCoverUrl() != null) existingBook.setBackCoverUrl(request.getBackCoverUrl());
         existingBook.setUpdatedAt(LocalDateTime.now());
 
         return bookRepository.save(existingBook);
@@ -101,7 +118,4 @@ public class BookService {
         bookRepository.deleteById(id);
     }
     
-    public Book saveBookDirectly(Book book) {
-        return bookRepository.save(book);
-    }
 }
