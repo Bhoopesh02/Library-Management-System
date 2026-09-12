@@ -37,7 +37,6 @@ public class AiService {
 
     @Autowired
     private BookRepository bookRepository;
-
     private static final Set<String> STOP_WORDS = Set.of(
             "do", "you", "have", "any", "is", "are", "a", "an", "the", 
             "tell", "me", "about", "book", "books", "by", "written", "in", 
@@ -242,6 +241,9 @@ public class AiService {
             return "Sorry, I couldn't process your request right now.";
         } catch (Exception e) {
             e.printStackTrace(); // Logs only to backend console
+            if (e.getMessage() != null && e.getMessage().contains("429 Too Many Requests")) {
+                return "I'm receiving too many requests right now. Please wait about 30 seconds and try again!";
+            }
             return "Sorry, I am currently unavailable. Please try again later.";
         }
     }
@@ -265,6 +267,10 @@ public class AiService {
                 relevantBooks.add(b);
                 if (relevantBooks.size() >= 20) break;
             }
+        }
+        
+        if (relevantBooks.isEmpty()) {
+            return bookRepository.findAll(PageRequest.of(0, 20)).getContent();
         }
         
         return new ArrayList<>(relevantBooks);
