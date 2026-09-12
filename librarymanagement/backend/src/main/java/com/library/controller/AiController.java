@@ -31,7 +31,11 @@ public class AiController {
             return ResponseEntity.badRequest().body(new AiChatResponse("Message exceeds the maximum length of 3000 characters."));
         }
 
-        String userEmail = (principal != null) ? principal.getName() : "anonymous";
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new AiChatResponse("You must be logged in to use the AI Assistant."));
+        }
+
+        String userEmail = principal.getName();
         if (!rateLimiterService.tryConsumeAiChat(userEmail)) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                     .body(new AiChatResponse("You have exceeded the AI chat rate limit (10 requests per hour). Please try again later."));

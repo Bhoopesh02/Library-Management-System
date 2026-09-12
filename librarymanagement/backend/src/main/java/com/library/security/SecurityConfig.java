@@ -80,6 +80,8 @@ public class SecurityConfig {
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/fines").hasAnyRole("ADMIN", "MASTER_ADMIN")
                 .requestMatchers("/api/fines/user/**").hasAnyRole("ADMIN", "MASTER_ADMIN", "USER")
                 .requestMatchers("/api/fines/*/pay").hasAnyRole("ADMIN", "MASTER_ADMIN")
+                // AI Chat
+                .requestMatchers("/api/ai/**").hasAnyRole("ADMIN", "MASTER_ADMIN", "USER")
                 .anyRequest().authenticated()
             );
             

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import styles from './AiChatWidget.module.css';
+import { API_BASE_URL } from '../../../utils/api';
 
 const AiChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -32,7 +33,7 @@ const AiChatWidget = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:8080/api/ai/chat', {
+      const response = await fetch(`${API_BASE_URL}/ai/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -42,14 +43,27 @@ const AiChatWidget = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch response');
+        let errorMessage = 'Failed to fetch response';
+        try {
+          const errorData = await response.json();
+          if (errorData && errorData.reply) {
+            errorMessage = errorData.reply;
+          }
+        } catch (e) {
+          // Ignore JSON parse error if response isn't JSON
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
       setMessages(prev => [...prev, { role: 'ai', content: data.reply }]);
     } catch (error) {
       console.error('Error fetching AI response:', error);
-      setMessages(prev => [...prev, { role: 'ai', content: 'Sorry, I am having trouble connecting right now.' }]);
+      let fallbackMessage = 'Sorry, I am having trouble connecting right now.';
+      if (error.message && error.message !== 'Failed to fetch response' && error.message !== 'Failed to fetch' && !error.message.includes('JSON')) {
+        fallbackMessage = error.message;
+      }
+      setMessages(prev => [...prev, { role: 'ai', content: fallbackMessage }]);
     } finally {
       setIsTyping(false);
     }
