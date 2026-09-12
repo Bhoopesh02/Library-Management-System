@@ -5,12 +5,13 @@ import styles from './DashboardLayout.module.css';
 import { useAuth } from '../../context/AuthContext';
 import { Sidebar } from './Sidebar';
 import { MasterAccessModal } from '../features/MasterAccessModal';
+import AiChatWidget from '../features/ai/AiChatWidget';
 
 export const DashboardLayout = ({ title, subtitle, children }) => {
   const { user, logout } = useAuth();
   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
-  const isAdmin = user?.role === 'ADMIN';
-  const isMasterAdmin = Boolean(user?.masterAdmin);
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'MASTER_ADMIN';
+  const isMasterAdmin = user?.role === 'MASTER_ADMIN';
 
   const userLinks = [
     { id: 'dashboard', to: '/dashboard', icon: Home, text: 'Dashboard' },
@@ -72,6 +73,8 @@ export const DashboardLayout = ({ title, subtitle, children }) => {
             onClose={() => setIsMasterModalOpen(false)}
           />
         )}
+        
+        <AiChatWidget />
       </main>
     </div>
   );

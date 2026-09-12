@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -61,8 +62,13 @@ public class TransactionService {
         transaction.setDueDate(request.getDueDate());
         transaction.setStatus(Transaction.Status.ISSUED);
 
-        Transaction saved = transactionRepository.save(transaction);
-        return enrichTransaction(saved);
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof com.library.security.UserDetailsImpl) {
+            transaction.setIssuedByAdminId(((com.library.security.UserDetailsImpl) principal).getUser().getId());
+        }
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+        return enrichTransaction(savedTransaction);
     }
 
     public Transaction returnBook(String transactionId) {
@@ -105,6 +111,11 @@ public class TransactionService {
             transaction.setBookTitle(book.getTitle());
             transaction.setFrontCoverUrl(book.getFrontCoverUrl());
         });
+        if (transaction.getIssuedByAdminId() != null) {
+            userRepository.findById(transaction.getIssuedByAdminId()).ifPresent(admin -> {
+                transaction.setIssuedByAdminName(admin.getName());
+            });
+        }
         return transaction;
     }
 }

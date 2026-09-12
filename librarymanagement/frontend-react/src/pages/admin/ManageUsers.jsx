@@ -22,6 +22,7 @@ export const ManageUsers = () => {
   const [userToDelete, setUserToDelete] = useState(null);
   const [deleteError, setDeleteError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [deleteKey, setDeleteKey] = useState('');
 
   const queryClient = useQueryClient();
 
@@ -44,8 +45,9 @@ export const ManageUsers = () => {
   });
 
   const deleteAccountMutation = useMutation({
-    mutationFn: ({ userId }) => fetchApi(`/users/${userId}`, {
-      method: 'DELETE'
+    mutationFn: ({ userId, deleteKey }) => fetchApi(`/users/${userId}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ deleteKey })
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -73,13 +75,19 @@ export const ManageUsers = () => {
   const handleCloseDeleteModal = () => {
     setUserToDelete(null);
     setDeleteError('');
+    setDeleteKey('');
   };
 
   const handleConfirmDelete = (e) => {
     e.preventDefault();
+    if (!deleteKey) {
+      setDeleteError('Delete key is required.');
+      return;
+    }
     setDeleteError('');
     deleteAccountMutation.mutate({
-      userId: userToDelete.id
+      userId: userToDelete.id,
+      deleteKey
     });
   };
 
@@ -156,8 +164,8 @@ export const ManageUsers = () => {
                   </td>
                   <td>{u.email}</td>
                   <td>
-                    {u.role === 'ADMIN' ? (
-                      u.masterAdmin ? (
+                    {u.role === 'ADMIN' || u.role === 'MASTER_ADMIN' ? (
+                      u.role === 'MASTER_ADMIN' ? (
                         <Badge style={{ background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)', color: '#333333', fontWeight: 700 }}>
                           <Crown size={13} /> Master Admin
                         </Badge>
@@ -182,7 +190,7 @@ export const ManageUsers = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                      {u.role !== 'ADMIN' && (
+                      {u.role !== 'ADMIN' && u.role !== 'MASTER_ADMIN' && (
                         <Button 
                           variant={u.status === 'ACTIVE' ? 'secondary' : 'primary'} 
                           size="sm"
@@ -192,7 +200,7 @@ export const ManageUsers = () => {
                           {u.status === 'ACTIVE' ? <><Ban size={14} /> Suspend</> : <><CheckCircle size={14} /> Activate</>}
                         </Button>
                       )}
-                      {user?.masterAdmin && (
+                      {user?.role === 'MASTER_ADMIN' && (
                         <Button
                           variant="danger"
                           size="sm"
@@ -268,6 +276,20 @@ export const ManageUsers = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          <div style={{ marginBottom: '1.25rem' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+              Admin Delete Key <span style={{ color: 'var(--danger-color)' }}>*</span>
+            </label>
+            <Input 
+              type="password"
+              placeholder="Enter the master delete key to authorize"
+              value={deleteKey}
+              onChange={(e) => setDeleteKey(e.target.value)}
+              disabled={deleteAccountMutation.isPending}
+              required
+            />
           </div>
 
           {deleteError && (

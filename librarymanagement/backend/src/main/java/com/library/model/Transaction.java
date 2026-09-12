@@ -19,6 +19,10 @@ public class Transaction {
     private LocalDate returnDate;
     private Status status;
     private Double fineAmount;
+    private String issuedByAdminId;
+
+    @Transient
+    private String issuedByAdminName;
 
     @Transient
     private String bookTitle;
@@ -44,6 +48,10 @@ public class Transaction {
     public void setStatus(Status status) { this.status = status; }
     public Double getFineAmount() { return fineAmount; }
     public void setFineAmount(Double fineAmount) { this.fineAmount = fineAmount; }
+    public String getIssuedByAdminId() { return issuedByAdminId; }
+    public void setIssuedByAdminId(String issuedByAdminId) { this.issuedByAdminId = issuedByAdminId; }
+    public String getIssuedByAdminName() { return issuedByAdminName; }
+    public void setIssuedByAdminName(String issuedByAdminName) { this.issuedByAdminName = issuedByAdminName; }
     public String getBookTitle() { return bookTitle; }
     public void setBookTitle(String bookTitle) { this.bookTitle = bookTitle; }
     public String getFrontCoverUrl() { return frontCoverUrl; }

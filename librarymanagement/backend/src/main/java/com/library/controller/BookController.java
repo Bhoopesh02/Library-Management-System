@@ -31,7 +31,7 @@ public class BookController {
     @Autowired
     private CoverImageRepository coverImageRepository;
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN', 'USER')")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Book>>> getAllBooks(
             @RequestParam(required = false) String search,
@@ -42,7 +42,7 @@ public class BookController {
         return ResponseEntity.ok(ApiResponse.success("Books retrieved successfully", books));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN', 'USER')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Book>> getBookById(@PathVariable("id") String id) {
         Book book = bookService.getBookById(id);
@@ -50,7 +50,7 @@ public class BookController {
     }
 
     // Only ADMIN (protected by SecurityConfig)
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PostMapping
     public ResponseEntity<ApiResponse<Book>> addBook(@Valid @RequestBody BookRequest request) {
         Book book = bookService.addBook(request);
@@ -58,7 +58,7 @@ public class BookController {
     }
 
     // Only ADMIN
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Book>> updateBook(@PathVariable("id") String id, @Valid @RequestBody BookRequest request) {
         Book book = bookService.updateBook(id, request);
@@ -66,7 +66,7 @@ public class BookController {
     }
 
     // Only ADMIN
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteBook(@PathVariable("id") String id) {
         bookService.deleteBook(id);
@@ -74,7 +74,7 @@ public class BookController {
     }
     
     // Only ADMIN
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PostMapping("/{id}/cover")
     public ResponseEntity<ApiResponse<Book>> uploadCover(
             @PathVariable("id") String id,
@@ -143,7 +143,7 @@ public class BookController {
         }
     }
     
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @DeleteMapping("/{id}/cover")
     public ResponseEntity<ApiResponse<Book>> deleteCover(
             @PathVariable("id") String id,

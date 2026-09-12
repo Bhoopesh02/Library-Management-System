@@ -239,11 +239,11 @@ public class AuthService {
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
         
         if (request.isAdminPortal()) {
-            if (userDetails.getUser().getRole() != User.Role.ADMIN) {
+            if (userDetails.getUser().getRole() != User.Role.ADMIN && userDetails.getUser().getRole() != User.Role.MASTER_ADMIN) {
                 throw new RuntimeException("Only administrators can log in here.");
             }
         } else {
-            if (userDetails.getUser().getRole() == User.Role.ADMIN) {
+            if (userDetails.getUser().getRole() == User.Role.ADMIN || userDetails.getUser().getRole() == User.Role.MASTER_ADMIN) {
                 throw new RuntimeException("Admin accounts must log in through the Administrator Portal.");
             }
         }
@@ -275,7 +275,7 @@ public class AuthService {
         }
 
         User user = userOpt.get();
-        if (user.getRole() == User.Role.ADMIN) {
+        if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.MASTER_ADMIN) {
             logger.warn("[SECURITY] [type=PASSWORD_RESET_INITIATED] [email={}] - Request ignored (Admin accounts disallowed)", request.getEmail());
             // Admin passwords cannot be reset via this method. Silent return.
             return;
@@ -308,7 +308,7 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new InvalidCredentialsException("No user found with this email address."));
 
-        if (user.getRole() == User.Role.ADMIN) {
+        if (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.MASTER_ADMIN) {
             throw new InvalidCredentialsException("Admin passwords cannot be reset via this method.");
         }
 
@@ -366,7 +366,7 @@ public class AuthService {
             throw new FeatureDisabledException("Only existing administrators can be elevated to Master Admin.");
         }
 
-        user.setMasterAdmin(true);
+        user.setRole(User.Role.MASTER_ADMIN);
         userRepository.save(user);
 
         rateLimiterService.resetLoginAttempts(rateLimitKey);

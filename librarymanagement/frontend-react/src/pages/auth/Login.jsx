@@ -26,8 +26,9 @@ export const Login = () => {
         const finalToken = accessToken || token;
         login(user, finalToken, refreshToken);
         
-        if (user.role === 'ADMIN') {
-          navigate('/admin');
+        if (user.role === 'ADMIN' || user.role === 'MASTER_ADMIN') {
+          setError('Admin accounts must log in through the Administrator Portal.');
+          return;
         } else {
           navigate('/dashboard');
         }

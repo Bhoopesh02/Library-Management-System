@@ -26,11 +26,16 @@ public class RateLimiterService {
     // Maps email to a list of timestamps of OTP requests (daily limit)
     private final ConcurrentHashMap<String, List<Long>> dailyEmailOtpHistory = new ConcurrentHashMap<>();
     
+    // Maps email to a list of timestamps of AI chat requests (hourly limit)
+    private final ConcurrentHashMap<String, List<Long>> aiChatHistory = new ConcurrentHashMap<>();
+    
     private static final int MAX_ATTEMPTS = 5;
     private static final int MAX_OTP_ATTEMPTS = 3;
     private static final int MAX_DAILY_EMAIL_OTP_ATTEMPTS = 5;
+    private static final int MAX_AI_CHAT_ATTEMPTS = 10;
     private static final long TIME_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
     private static final long DAILY_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
+    private static final long AI_CHAT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
     private static final long MAX_BACKOFF_MS = 15 * 60 * 1000; // 15 mins
     private static final long RESET_WINDOW_MS = 15 * 60 * 1000; // 15 mins inactivity resets count
     
@@ -55,6 +60,13 @@ public class RateLimiterService {
         dailyEmailOtpHistory.entrySet().removeIf(entry -> {
             synchronized (entry.getValue()) {
                 entry.getValue().removeIf(timestamp -> currentTime - timestamp > DAILY_WINDOW_MS);
+                return entry.getValue().isEmpty();
+            }
+        });
+        
+        aiChatHistory.entrySet().removeIf(entry -> {
+            synchronized (entry.getValue()) {
+                entry.getValue().removeIf(timestamp -> currentTime - timestamp > AI_CHAT_WINDOW_MS);
                 return entry.getValue().isEmpty();
             }
         });
@@ -157,6 +169,25 @@ public class RateLimiterService {
                 return true;
             }
             logger.warn("[SECURITY] [type=RATE_LIMIT] [email={}] [endpoint=otp] - Email exceeded daily OTP request limit", email);
+            return false;
+        }
+    }
+
+    public boolean tryConsumeAiChat(String email) {
+        aiChatHistory.putIfAbsent(email, new ArrayList<>());
+        List<Long> list = aiChatHistory.get(email);
+        
+        synchronized (list) {
+            long currentTime = System.currentTimeMillis();
+            
+            // Clean up old entries
+            list.removeIf(timestamp -> currentTime - timestamp > AI_CHAT_WINDOW_MS);
+            
+            if (list.size() < MAX_AI_CHAT_ATTEMPTS) {
+                list.add(currentTime);
+                return true;
+            }
+            logger.warn("[SECURITY] [type=RATE_LIMIT] [email={}] [endpoint=ai_chat] - User exceeded AI chat hourly limit", email);
             return false;
         }
     }

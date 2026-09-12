@@ -33,7 +33,7 @@ public class DashboardController {
     @Autowired
     private FineRepository fineRepository;
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @GetMapping("/admin")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getAdminDashboardStats() {
         Map<String, Object> stats = new HashMap<>();

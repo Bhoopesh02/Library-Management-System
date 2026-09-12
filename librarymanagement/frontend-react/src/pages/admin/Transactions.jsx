@@ -77,6 +77,7 @@ export const Transactions = () => {
               <th>Transaction ID</th>
               <th>User ID</th>
               <th>Book ID</th>
+              <th>Issued By</th>
               <th>Issue Date</th>
               <th>Due Date</th>
               <th>Return Date</th>
@@ -86,12 +87,12 @@ export const Transactions = () => {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
+              <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem' }}>Loading...</td></tr>
             ) : isError ? (
-              <tr><td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--danger-color)' }}>Failed to load transactions.</td></tr>
+              <tr><td colSpan="9" style={{ textAlign: 'center', padding: '2rem', color: 'var(--danger-color)' }}>Failed to load transactions.</td></tr>
             ) : transactions.length === 0 ? (
               <tr>
-                <td colSpan="8">
+                <td colSpan="9">
                   <EmptyState icon={ArrowRightLeft} title="No transactions recorded" description="Newly issued book transactions will appear here." />
                 </td>
               </tr>
@@ -106,6 +107,7 @@ export const Transactions = () => {
                     <td><code>{t.id ? t.id.substring(0, 8) : '-'}...</code></td>
                     <td><code>{t.userId ? t.userId.substring(0, 8) : '-'}...</code></td>
                     <td><code>{t.bookId ? t.bookId.substring(0, 8) : '-'}...</code></td>
+                    <td>{t.issuedByAdminName || '-'}</td>
                     <td>{t.issueDate ? new Date(t.issueDate).toLocaleDateString() : '-'}</td>
                     <td style={{ color: isOverdue ? 'var(--danger-color)' : 'inherit', fontWeight: isOverdue ? 600 : 400 }}>
                       {t.dueDate ? new Date(t.dueDate).toLocaleDateString() : '-'}

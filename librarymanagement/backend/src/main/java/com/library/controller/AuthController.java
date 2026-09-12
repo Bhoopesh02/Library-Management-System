@@ -170,10 +170,10 @@ public class AuthController {
                 });
     }
 
-    @org.springframework.security.access.prepost.PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @org.springframework.security.access.prepost.PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PostMapping("/elevate-master")
     public ResponseEntity<ApiResponse<AuthResponse>> elevateMaster(
-            @Valid @RequestBody com.library.dto.DeleteAccountRequest request,
+            @Valid @RequestBody com.library.dto.ElevateMasterRequest request,
             org.springframework.security.core.Authentication authentication) {
         AuthResponse response = authService.elevateToMasterAdmin(authentication.getName(), request.getMasterKey());
         return ResponseEntity.ok(ApiResponse.success("Master Admin privileges unlocked successfully", response));

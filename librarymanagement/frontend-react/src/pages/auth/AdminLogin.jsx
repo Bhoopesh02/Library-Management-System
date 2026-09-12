@@ -25,7 +25,7 @@ export const AdminLogin = () => {
         const { accessToken, refreshToken, token, user } = response.data;
         const finalToken = accessToken || token;
         
-        if (user.role !== 'ADMIN') {
+        if (user.role !== 'ADMIN' && user.role !== 'MASTER_ADMIN') {
           setError('Access denied. Administrator privileges required.');
           return;
         }

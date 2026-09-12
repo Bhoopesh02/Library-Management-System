@@ -67,19 +67,19 @@ public class SecurityConfig {
                 // Allow public access to uploaded files (like book covers)
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/books/*/coverImage").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll() // Keeping just in case for older data or other static assets
-                .requestMatchers("/api/dashboard/admin", "/api/dashboard/admin/**").hasRole("ADMIN")
-                .requestMatchers("/api/users/**").hasRole("ADMIN") // Only admin can manage users
+                .requestMatchers("/api/dashboard/admin", "/api/dashboard/admin/**").hasAnyRole("ADMIN", "MASTER_ADMIN")
+                .requestMatchers("/api/users/**").hasAnyRole("ADMIN", "MASTER_ADMIN") // Only admin can manage users
                 // Allow users to GET books, but only admin can modify
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/books/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/api/books/**").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/books/**").hasAnyRole("ADMIN", "MASTER_ADMIN", "USER")
+                .requestMatchers("/api/books/**").hasAnyRole("ADMIN", "MASTER_ADMIN")
                 // Transactions
-                .requestMatchers("/api/transactions/issue", "/api/transactions/return").hasRole("ADMIN")
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/transactions").hasRole("ADMIN")
-                .requestMatchers("/api/transactions/user/**").hasAnyRole("ADMIN", "USER")
+                .requestMatchers("/api/transactions/issue", "/api/transactions/return").hasAnyRole("ADMIN", "MASTER_ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/transactions").hasAnyRole("ADMIN", "MASTER_ADMIN")
+                .requestMatchers("/api/transactions/user/**").hasAnyRole("ADMIN", "MASTER_ADMIN", "USER")
                 // Fines
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/fines").hasRole("ADMIN")
-                .requestMatchers("/api/fines/user/**").hasAnyRole("ADMIN", "USER")
-                .requestMatchers("/api/fines/*/pay").hasRole("ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/fines").hasAnyRole("ADMIN", "MASTER_ADMIN")
+                .requestMatchers("/api/fines/user/**").hasAnyRole("ADMIN", "MASTER_ADMIN", "USER")
+                .requestMatchers("/api/fines/*/pay").hasAnyRole("ADMIN", "MASTER_ADMIN")
                 .anyRequest().authenticated()
             );
             

@@ -18,21 +18,21 @@ public class TransactionController {
     @Autowired
     private TransactionService transactionService;
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PostMapping("/issue")
     public ResponseEntity<ApiResponse<Transaction>> issueBook(@Valid @RequestBody IssueRequest request) {
         Transaction transaction = transactionService.issueBook(request);
         return ResponseEntity.ok(ApiResponse.success("Book issued successfully", transaction));
     }
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PostMapping("/return/{id}")
     public ResponseEntity<ApiResponse<Transaction>> returnBook(@PathVariable("id") String id) {
         Transaction transaction = transactionService.returnBook(id);
         return ResponseEntity.ok(ApiResponse.success("Book returned successfully", transaction));
     }
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Transaction>>> getAllTransactions(
             @RequestParam(defaultValue = "0") int page,
@@ -40,7 +40,7 @@ public class TransactionController {
         return ResponseEntity.ok(ApiResponse.success("Transactions retrieved", transactionService.getAllTransactions(page, size)));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.user.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN') or #userId == authentication.principal.user.id")
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<Page<Transaction>>> getTransactionsByUser(
             @PathVariable("userId") String userId,

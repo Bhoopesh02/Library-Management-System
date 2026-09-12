@@ -47,6 +47,9 @@ public class UserService {
     @Value("${app.admin.master-key:}")
     private String adminMasterKey;
 
+    @Value("${app.admin.delete-key:}")
+    private String adminDeleteKey;
+
     public Page<User> getAllUsers(String search, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
         if (search != null && !search.trim().isEmpty()) {
@@ -69,17 +72,31 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUserAccount(String id, String currentAdminEmail) {
+    public void deleteUserAccount(String id, String currentAdminEmail, String deleteKey) {
+        if (adminDeleteKey == null || adminDeleteKey.trim().isEmpty()) {
+            throw new RuntimeException("Admin delete key is not configured on the server.");
+        }
+        if (deleteKey == null || deleteKey.trim().isEmpty()) {
+            throw new RuntimeException("Delete key is required.");
+        }
+        boolean keyMatches = MessageDigest.isEqual(
+                deleteKey.getBytes(StandardCharsets.UTF_8),
+                adminDeleteKey.getBytes(StandardCharsets.UTF_8)
+        );
+        if (!keyMatches) {
+            throw new RuntimeException("Invalid admin delete key.");
+        }
+
         User currentAdmin = userRepository.findByEmail(currentAdminEmail)
                 .orElseThrow(() -> new RuntimeException("Current admin not found"));
-        if (!currentAdmin.isMasterAdmin()) {
+        if (currentAdmin.getRole() != User.Role.MASTER_ADMIN) {
             throw new RuntimeException("Only Master Admins are authorized to delete accounts.");
         }
 
         User user = getUserById(id);
 
-        if (user.getEmail() != null && user.getEmail().equalsIgnoreCase(currentAdminEmail)) {
-            throw new RuntimeException("You cannot delete your own logged-in admin account.");
+        if (user.getRole() == User.Role.MASTER_ADMIN) {
+            throw new RuntimeException("Master Admin accounts cannot be deleted through the API.");
         }
 
         // For regular users, verify they have no active/overdue loans or unpaid fines

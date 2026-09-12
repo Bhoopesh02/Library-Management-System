@@ -20,13 +20,23 @@ public class SecurityValidationService {
      * @param username the username (email) extracted from the authentication principal
      * @return true if the user still exists and their current DB role is ADMIN
      */
-    public boolean isCurrentlyAdmin(String username) {
+    public boolean isCurrentlyAdminOrMaster(String username) {
         Optional<User> userOpt = userRepository.findByEmail(username);
         if (userOpt.isEmpty()) {
-            return false; // User deleted
+            return false;
         }
         
         User user = userOpt.get();
-        return user.getRole() == User.Role.ADMIN && user.getStatus() == User.Status.ACTIVE;
+        return (user.getRole() == User.Role.ADMIN || user.getRole() == User.Role.MASTER_ADMIN) && user.getStatus() == User.Status.ACTIVE;
+    }
+
+    public boolean isCurrentlyMasterAdmin(String username) {
+        Optional<User> userOpt = userRepository.findByEmail(username);
+        if (userOpt.isEmpty()) {
+            return false;
+        }
+        
+        User user = userOpt.get();
+        return user.getRole() == User.Role.MASTER_ADMIN && user.getStatus() == User.Status.ACTIVE;
     }
 }

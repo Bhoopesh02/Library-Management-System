@@ -56,7 +56,7 @@ public class AuthResponse {
                     user.getName(),
                     user.getEmail(),
                     user.getRole().name(),
-                    user.isMasterAdmin()
+                    user.getRole() == User.Role.MASTER_ADMIN
             );
         }
     }

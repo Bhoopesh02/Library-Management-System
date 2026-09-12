@@ -24,7 +24,7 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<User>>> getAllUsers(
             @RequestParam(required = false) String search,
@@ -33,26 +33,27 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Users retrieved", userService.getAllUsers(search, page, size)));
     }
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<User>> getUserById(@PathVariable String id) {
         return ResponseEntity.ok(ApiResponse.success("User retrieved", userService.getUserById(id)));
     }
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyMasterAdmin(authentication.name)")
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<User>> updateUserStatus(@PathVariable String id, @RequestParam User.Status status, Authentication authentication) {
         logger.info("[SECURITY] [type=ADMIN_ACTION] [admin={}] [action=UPDATE_STATUS] [target={}] [newValue={}]", authentication.getName(), id, status);
         return ResponseEntity.ok(ApiResponse.success("User status updated", userService.updateUserStatus(id, status)));
     }
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyMasterAdmin(authentication.name)")
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteUser(
             @PathVariable String id,
+            @Valid @RequestBody com.library.dto.DeleteAccountRequest request,
             Authentication authentication) {
         logger.warn("[SECURITY] [type=ADMIN_ACTION] [admin={}] [action=DELETE_USER] [target={}]", authentication.getName(), id);
-        userService.deleteUserAccount(id, authentication.getName());
+        userService.deleteUserAccount(id, authentication.getName(), request.getDeleteKey());
         return ResponseEntity.ok(ApiResponse.success("Account deleted successfully", null));
     }
 }

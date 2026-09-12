@@ -4,25 +4,25 @@ import jakarta.validation.constraints.NotBlank;
 
 public class DeleteAccountRequest {
 
-    @NotBlank(message = "Admin master key is required")
-    private String masterKey;
+    @NotBlank(message = "Admin delete key is required")
+    private String deleteKey;
 
     public DeleteAccountRequest() {}
 
-    public DeleteAccountRequest(String masterKey) {
-        this.masterKey = masterKey;
+    public DeleteAccountRequest(String deleteKey) {
+        this.deleteKey = deleteKey;
     }
 
-    public String getMasterKey() {
-        return masterKey;
+    public String getDeleteKey() {
+        return deleteKey;
     }
 
-    public void setMasterKey(String masterKey) {
-        this.masterKey = masterKey;
+    public void setDeleteKey(String deleteKey) {
+        this.deleteKey = deleteKey;
     }
 
     @Override
     public String toString() {
-        return "DeleteAccountRequest{masterKey='[PROTECTED]'}";
+        return "DeleteAccountRequest{deleteKey='[PROTECTED]'}";
     }
 }

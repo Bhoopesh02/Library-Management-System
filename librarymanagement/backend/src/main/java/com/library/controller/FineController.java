@@ -16,7 +16,7 @@ public class FineController {
     @Autowired
     private FineService fineService;
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @GetMapping
     public ResponseEntity<ApiResponse<Page<Fine>>> getAllFines(
             @RequestParam(defaultValue = "0") int page,
@@ -24,7 +24,7 @@ public class FineController {
         return ResponseEntity.ok(ApiResponse.success("Fines retrieved", fineService.getAllFines(page, size)));
     }
 
-    @PreAuthorize("hasRole('ADMIN') or #userId == authentication.principal.user.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MASTER_ADMIN') or #userId == authentication.principal.user.id")
     @GetMapping("/user/{userId}")
     public ResponseEntity<ApiResponse<Page<Fine>>> getFinesByUser(
             @PathVariable("userId") String userId,
@@ -33,7 +33,7 @@ public class FineController {
         return ResponseEntity.ok(ApiResponse.success("User fines retrieved", fineService.getFinesByUser(userId, page, size)));
     }
 
-    @PreAuthorize("@securityValidationService.isCurrentlyAdmin(authentication.name)")
+    @PreAuthorize("@securityValidationService.isCurrentlyAdminOrMaster(authentication.name)")
     @PostMapping("/{id}/pay")
     public ResponseEntity<ApiResponse<Fine>> payFine(@PathVariable("id") String id) {
         Fine fine = fineService.payFine(id);
